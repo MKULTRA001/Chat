@@ -23,6 +23,6 @@ public class HelloController {
     @MessageMapping("/test")
     @SendTo("/test/hello")
     public TestMessage helloWorld(TestMessage message){
-        return new TestMessage("Received: " + message.getMessage());
+        return new TestMessage("New Message: " + message.getMessage());
     }
 }
