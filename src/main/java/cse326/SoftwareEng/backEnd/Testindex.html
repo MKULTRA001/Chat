@@ -19,8 +19,16 @@
                 <div class="form-group">
                     <label for="connect">WebSocket connection:</label>
                     <button id="connect" class="btn btn-default" type="submit">Connect</button>
-                    <button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect
-                    </button>
+                    <button id="disconnect" class="btn btn-default" type="submit">Disconnect</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="input">Enter Name</label>
+                    <input type="text" id="name" class="form-control" placeholder="Enter Name...">
+                    <button id="sendName" class="btn btn-default" type="submit" disabled="disabled">Submit</button>
                 </div>
             </form>
         </div>
@@ -28,9 +36,9 @@
             <form class="form-inline">
                 <div class="form-group">
                     <label for="input">Type Message</label>
-                    <input type="text" id="input" class="form-control" placeholder="Your name here...">
+                    <input type="text" id="input" class="form-control" placeholder="Enter Message...">
+                    <button id="send" class="btn btn-default" type="submit" disabled="disabled">Send</button>
                 </div>
-                <button id="send" class="btn btn-default" type="submit">Send</button>
             </form>
         </div>
     </div>
@@ -39,7 +47,7 @@
             <table id="conversation" class="table table-striped">
                 <thead>
                 <tr>
-                    <th>Greetings</th>
+                    <th>Chat</th>
                 </tr>
                 </thead>
                 <tbody id="text">

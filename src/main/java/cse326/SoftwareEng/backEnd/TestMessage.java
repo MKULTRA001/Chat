@@ -6,6 +6,7 @@ package cse326.SoftwareEng.backEnd;
 public class TestMessage {
     private String message;
 
+    public TestMessage(){}
     public TestMessage(String message){
         this.message = message;
     }
