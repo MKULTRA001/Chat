@@ -1,5 +1,6 @@
 package cse326.SoftwareEng.database;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 public class AppController {
@@ -46,5 +48,12 @@ public class AppController {
         List<User> listUsers = userRepo.findAll();
         model.addAttribute("listUsers", listUsers);
         return "users";
+    }
+    @RequestMapping("/deleteAccount")
+    public String deleteAccount(){
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        userRepo.deleteByUsername(userName);
+        SecurityContextHolder.clearContext();
+        return "deleted_success";
     }
 }

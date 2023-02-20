@@ -10,6 +10,9 @@
 <body>
 <div class="container text-center">
     <div>
+        <form th:action="@{/deleteAccount}" method="post">
+            <button type="submit">Delete Account</button>
+        </form>
         <form th:action="@{/logout}" method="post">
             <p>
                 Welcome

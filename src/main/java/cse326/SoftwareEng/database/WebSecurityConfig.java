@@ -25,7 +25,6 @@ public class WebSecurityConfig{
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
-
         return authProvider;
     }
     @Bean
@@ -43,7 +42,10 @@ public class WebSecurityConfig{
                         .defaultSuccessUrl("/users")
                         .permitAll()
                         .and()
-                        .logout().logoutSuccessUrl("/").permitAll();
+                        .logout().logoutSuccessUrl("/")
+                        .permitAll()
+                        .and()
+                        .exceptionHandling().accessDeniedPage("/403");
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
