@@ -1,15 +1,25 @@
 package cse326.SoftwareEng.database;
 
+import cse326.SoftwareEng.backEnd.HelloController;
+import cse326.SoftwareEng.backEnd.HelloSocketConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 
 @Configuration
+@Import({HelloController.class})
+@EnableWebSocketMessageBroker
 public class WebSecurityConfig{
+    @Bean
+    public HelloSocketConfig helloSocketConfig() {
+        return new HelloSocketConfig();
+    }
     @Bean
     public UserDetailsService userDetailsService() {
         return new CustomUserDetailsService();
@@ -34,7 +44,8 @@ public class WebSecurityConfig{
                 .authorizeHttpRequests(requests -> {
                     try {
                         requests
-                        .requestMatchers("/users").authenticated()
+                        .requestMatchers("/users", "/myUsername", "/TestIndex", "/test", "/test-websocket" +
+                                "/app").authenticated()
                         .anyRequest().permitAll()
                         .and()
                         .formLogin()

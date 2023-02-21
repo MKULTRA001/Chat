@@ -2,6 +2,7 @@ package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
 import cse326.SoftwareEng.backEnd.TestMessage;
+import org.springframework.context.annotation.Import;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Controller
+@Import(HelloController.class)
 public class AppController {
 
     private final UserRepository userRepo;
