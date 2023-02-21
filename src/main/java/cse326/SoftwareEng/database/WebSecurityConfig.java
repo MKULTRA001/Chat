@@ -45,7 +45,10 @@ public class WebSecurityConfig{
                         .logout().logoutSuccessUrl("/")
                         .permitAll()
                         .and()
-                        .exceptionHandling().accessDeniedPage("/403");
+                        .exceptionHandling().accessDeniedPage("/403")
+                        .and()
+                        .formLogin()
+                        .loginPage("/login");
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

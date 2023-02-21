@@ -29,4 +29,5 @@ public class HelloSocketConfig implements WebSocketMessageBrokerConfigurer {
         //This enables various things but the important part is just make sure the socket endpoint lines up in the JS
         registry.addEndpoint("/test-websocket").withSockJS();
     }
+
 }

@@ -1,10 +1,16 @@
 package cse326.SoftwareEng.database;
 
+import cse326.SoftwareEng.backEnd.HelloController;
+import cse326.SoftwareEng.backEnd.TestMessage;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -55,5 +61,9 @@ public class AppController {
         userRepo.deleteByUsername(userName);
         SecurityContextHolder.clearContext();
         return "deleted_success";
+    }
+    @RequestMapping("/login")
+    public String userLogin(){
+        return "login";
     }
 }
