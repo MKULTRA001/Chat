@@ -9,7 +9,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 /**
  * Test Socket Config
  * <p>Default application endpoint prefix: /app</p>
- * <p>Default client message broker endpoint: /test</p>
+ * <p>Default client message broker endpoint: /chat</p>
  */
 @Configuration
 @EnableWebSocketMessageBroker
@@ -19,7 +19,7 @@ public class HelloSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         //where the broker operates (outgoing)
-        config.enableSimpleBroker("/test");
+        config.enableSimpleBroker("/chat");
         //where the application operates (incoming)
         config.setApplicationDestinationPrefixes("/app");
     }
@@ -27,7 +27,7 @@ public class HelloSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         //This enables various things but the important part is just make sure the socket endpoint lines up in the JS
-        registry.addEndpoint("/test-websocket").withSockJS();
+        registry.addEndpoint("/chat-websocket").withSockJS();
     }
 
 }

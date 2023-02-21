@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Test controller
- * <p>mapped to /app/test</p>
- * <p>Sends to /test/hello</p>
+ * <p>mapped to /app/chat</p>
+ * <p>Sends to /chat/hello</p>
  */
 @Controller
 public class HelloController{
@@ -26,31 +26,31 @@ public class HelloController{
      * @param message incoming message (in this text example it should be a name)
      * @return response to payload
      */
-    @MessageMapping("/test")
-    @SendTo("/test/hello")
-    public TestMessage helloWorld(TestMessage message){
-        return new TestMessage(message.getMessage());
+    @MessageMapping("/chat")
+    @SendTo("/chat/hello")
+    public TextMessage helloWorld(TextMessage message){
+        return new TextMessage(message.getMessage());
     }
 
 
     /**
-     * Respond to """login""" attempts
+     * Respond to login attempts
      * <p>In: /app/name</p>
-     * <p>Out: /test/hello</p>
+     * <p>Out: /chat/hello</p>
      * @param message incoming message (in this text example it should be a name)
      * @return response to payload
      */
     @MessageMapping("/name")
-    @SendTo("/test/hello")
-    public TestMessage login(TestMessage message){
+    @SendTo("/chat/hello")
+    public TextMessage login(TextMessage message){
         //You can do whatever handling you want with this uname via message.getMessage()
         //Currently, this is managed by a client-side variable for display only.
         //In theory, though, you should be able to message other objects and have them do whatever processes you need
-        return new TestMessage(message.getMessage() + " Has Connected!");
+        return new TextMessage(message.getMessage() + " Has Connected!");
     }
-    @RequestMapping("/TestIndex")
+    @RequestMapping("/chat_index")
     public String TestIndex(){
-        return "TestIndex";
+        return "chat_index";
     }
     @RequestMapping(value = "/myUsername", method = RequestMethod.GET)
     @ResponseBody

@@ -3,11 +3,11 @@ package cse326.SoftwareEng.backEnd;
 /**
  * Allows message text to be treated as JSON for transfer
  */
-public class TestMessage {
+public class TextMessage {
     private String message;
 
-    public TestMessage(){}
-    public TestMessage(String message){
+    public TextMessage(){}
+    public TextMessage(String message){
         this.message = message;
     }
 

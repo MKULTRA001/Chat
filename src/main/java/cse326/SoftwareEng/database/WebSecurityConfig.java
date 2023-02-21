@@ -44,7 +44,7 @@ public class WebSecurityConfig{
                 .authorizeHttpRequests(requests -> {
                     try {
                         requests
-                        .requestMatchers("/users", "/myUsername", "/TestIndex", "/test", "/test-websocket" +
+                        .requestMatchers("/users", "/myUsername", "/chat_index", "/chat", "/chat-websocket" +
                                 "/app").authenticated()
                         .anyRequest().permitAll()
                         .and()

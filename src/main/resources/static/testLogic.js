@@ -5,7 +5,7 @@ let open = false;
 function connect() {
     if (stompClient == null || !open) {
             //connect to the server endpoint
-        const socket = new SockJS('/test-websocket');
+        const socket = new SockJS('/chat-websocket');
         open = true;
             //bind STOMP message to the socket
             stompClient = Stomp.over(socket);
@@ -13,7 +13,7 @@ function connect() {
             stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame);
                 //"function" is the callback: this is executed every time a message is found on this channel
-                stompClient.subscribe('/test/hello', function (message) {
+                stompClient.subscribe('/chat/hello', function (message) {
                     //this just expands the text section with a new one for the line
                     $("#text").append("<tr><td>" + JSON.parse(message.body).message + "</td></tr>");
                 });
@@ -43,7 +43,7 @@ function send() {
     getUname().then(function (response) {
         $("#username_Update").replaceWith("Username: " + response);
         let value = $("#input").val();
-        stompClient.send("/app/test", {}, JSON.stringify({'message': response + ': ' + value}));
+        stompClient.send("/app/chat", {}, JSON.stringify({'message': response + ': ' + value}));
     });
 }
 

@@ -1,7 +1,7 @@
 package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
-import cse326.SoftwareEng.backEnd.TestMessage;
+import cse326.SoftwareEng.backEnd.TextMessage;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
