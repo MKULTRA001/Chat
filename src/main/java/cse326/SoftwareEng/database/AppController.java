@@ -62,4 +62,8 @@ public class AppController {
         SecurityContextHolder.clearContext();
         return "deleted_success";
     }
+    @RequestMapping("/login")
+    public String userLogin(){
+        return "login";
+    }
 }
