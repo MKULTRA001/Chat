@@ -1,8 +1,14 @@
 package cse326.SoftwareEng.backEnd;
 
+import cse326.SoftwareEng.database.AppController;
+import cse326.SoftwareEng.database.UserRepository;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Test controller
@@ -10,7 +16,7 @@ import org.springframework.stereotype.Controller;
  * <p>Sends to /test/hello</p>
  */
 @Controller
-public class HelloController {
+public class HelloController{
 
     /**
      * Basic controller to respond to messages
@@ -41,5 +47,14 @@ public class HelloController {
         //Currently, this is managed by a client-side variable for display only.
         //In theory, though, you should be able to message other objects and have them do whatever processes you need
         return new TestMessage(message.getMessage() + " Has Connected!");
+    }
+    @RequestMapping("/TestIndex")
+    public String TestIndex(){
+        return "TestIndex";
+    }
+    @RequestMapping(value = "/myUsername", method = RequestMethod.GET)
+    @ResponseBody
+    public String currentUserName() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }

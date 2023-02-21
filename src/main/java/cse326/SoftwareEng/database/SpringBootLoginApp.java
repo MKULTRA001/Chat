@@ -1,5 +1,6 @@
 package cse326.SoftwareEng.database;
 
+import cse326.SoftwareEng.backEnd.StompWebsocketMain;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
