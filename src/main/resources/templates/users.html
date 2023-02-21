@@ -19,6 +19,29 @@
             </p>
             <input type="submit" value="Sign Out" />
         </form>
+
+        <form th:action="@{/updatePassword}" method="post">
+            <div>
+                <label for="currentPassword">Current Password:</label>
+                <input type="password" id="currentPassword" name="currentPassword">
+            </div>
+            <div>
+                <label for="newPassword">New Password:</label>
+                <input type="password" id="newPassword" name="newPassword">
+            </div>
+            <div>
+                <label for="confirmPassword">Confirm Password:</label>
+                <input type="password" id="confirmPassword" name="confirmPassword">
+            </div>
+            <button type="submit">Update Password</button>
+        </form>
+
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+        <div th:if="${success}" class="success-message" th:text="${success}"></div>
+
+
+
+
     </div>
     <div>
         <h1>List of Users</h1>

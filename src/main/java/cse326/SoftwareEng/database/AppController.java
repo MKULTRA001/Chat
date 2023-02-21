@@ -1,10 +1,13 @@
 package cse326.SoftwareEng.database;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -55,5 +58,37 @@ public class AppController {
         userRepo.deleteByUsername(userName);
         SecurityContextHolder.clearContext();
         return "deleted_success";
+    }
+    @PostMapping("/updatePassword")
+    public String updatePassword(@RequestParam("currentPassword") String currentPassword,
+                                 @RequestParam("newPassword") String newPassword,
+                                 @RequestParam("confirmPassword") String confirmPassword,
+                                 Model model) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        User user = userRepo.findByUsername(username);
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            model.addAttribute("error", "The current password is incorrect.");
+            return "users";
+        }
+
+
+        if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("error", "The new password and confirm password do not match.");
+            return "users";
+        }
+
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepo.save(user);
+        Date javaDate = new Date();
+        user.setUpdated_at(new Timestamp(javaDate.getTime()));
+
+        model.addAttribute("success", "Your password has been updated successfully.");
+        return "update_success";
     }
 }
