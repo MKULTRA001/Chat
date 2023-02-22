@@ -83,28 +83,30 @@ public class AppController {
                                  Model model) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-        User user = userRepo.findByUsername(username);
+        User user = userRepo.findByUsername(auth.getName());
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 
-        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+        if(!passwordEncoder.matches(currentPassword, user.getPassword())) {
             model.addAttribute("error", "The current password is incorrect.");
-            return "users";
+            return "ChangePassword";
         }
-
-
-        if (!newPassword.equals(confirmPassword)) {
+        else if (!newPassword.equals(confirmPassword)) {
             model.addAttribute("error", "The new password and confirm password do not match.");
-            return "users";
+            return "ChangePassword";
         }
-        user.setPassword(passwordEncoder.encode(newPassword));
-        Date javaDate = new Date();
-        user.setUpdated_at(new Timestamp(javaDate.getTime()));
-        userRepo.save(user);
-        model.addAttribute("success", "Your password has been updated successfully.");
-        SecurityContextHolder.clearContext();
-        return "update_success";
-
+        else if(passwordEncoder.matches(newPassword, user.getPassword())) {
+            model.addAttribute("error", "The new password cannot be the same as the current password.");
+            return "ChangePassword";
+        }
+        else {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            Date javaDate = new Date();
+            user.setUpdated_at(new Timestamp(javaDate.getTime()));
+            userRepo.save(user);
+            model.addAttribute("success", "Your password has been updated successfully.");
+            SecurityContextHolder.clearContext();
+            return "update_success";
+        }
     }
 }
