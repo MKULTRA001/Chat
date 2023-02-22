@@ -1,13 +1,16 @@
 package cse326.SoftwareEng.database;
 
+import com.sun.net.httpserver.HttpContext;
 import cse326.SoftwareEng.backEnd.HelloController;
 import cse326.SoftwareEng.backEnd.TextMessage;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.net.HttpCookie;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -61,10 +65,11 @@ public class AppController {
         return "users";
     }
     @RequestMapping("/deleteAccount")
-    public String deleteAccount(){
+    public String deleteAccount(HttpServletRequest request){
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
         userRepo.deleteByUsername(userName);
         SecurityContextHolder.clearContext();
+        new SecurityContextLogoutHandler().logout(request, null, null);
         return "deleted_success";
     }
 
@@ -76,11 +81,11 @@ public class AppController {
     public String ChangePassword() {
         return "ChangePassword";
     }
-    @PostMapping("/updatePassword")
+    @RequestMapping("/updatePassword")
     public String updatePassword(@RequestParam("currentPassword") String currentPassword,
                                  @RequestParam("newPassword") String newPassword,
                                  @RequestParam("confirmPassword") String confirmPassword,
-                                 Model model) {
+                                 Model model, HttpServletRequest request) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = userRepo.findByUsername(auth.getName());
@@ -106,7 +111,8 @@ public class AppController {
             userRepo.save(user);
             model.addAttribute("success", "Your password has been updated successfully.");
             SecurityContextHolder.clearContext();
-            return "update_success";
+            new SecurityContextLogoutHandler().logout(request, null, null);
+        return "update_success";
         }
     }
 }

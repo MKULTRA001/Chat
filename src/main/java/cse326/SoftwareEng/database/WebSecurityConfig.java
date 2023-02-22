@@ -44,22 +44,21 @@ public class WebSecurityConfig{
                 .authorizeHttpRequests(requests -> {
                     try {
                         requests
-                        .requestMatchers("/users", "/myUsername", "/chat_index", "/chat", "/chat-websocket" +
-                                "/app", "/ChangePassword", "/updatePassword", "update_success").authenticated()
+                        .requestMatchers("/users", "/myUsername", "/chat_index", "/chat", "/chat-websocket",
+                                "/app", "/name", "/ChangePassword", "/updatePassword").authenticated()
                         .anyRequest().permitAll()
                         .and()
                         .formLogin()
                         .usernameParameter("username")
-                        .defaultSuccessUrl("/users")
+                        .loginPage("/login").
+                        defaultSuccessUrl("/users", true)
+                        .failureUrl("/login?error=true")
                         .permitAll()
                         .and()
                         .logout().logoutSuccessUrl("/")
-                        .permitAll()
+                        .deleteCookies("JSESSIONID")
                         .and()
-                        .exceptionHandling().accessDeniedPage("/403")
-                        .and()
-                        .formLogin()
-                        .loginPage("/login");
+                        .exceptionHandling().accessDeniedPage("/403");
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
