@@ -72,7 +72,10 @@ public class AppController {
     public String userLogin() {
         return "login";
     }
-
+    @RequestMapping("/ChangePassword")
+    public String ChangePassword() {
+        return "ChangePassword";
+    }
     @PostMapping("/updatePassword")
     public String updatePassword(@RequestParam("currentPassword") String currentPassword,
                                  @RequestParam("newPassword") String newPassword,
@@ -95,14 +98,12 @@ public class AppController {
             model.addAttribute("error", "The new password and confirm password do not match.");
             return "users";
         }
-
-
         user.setPassword(passwordEncoder.encode(newPassword));
-        userRepo.save(user);
         Date javaDate = new Date();
         user.setUpdated_at(new Timestamp(javaDate.getTime()));
-
+        userRepo.save(user);
         model.addAttribute("success", "Your password has been updated successfully.");
+        SecurityContextHolder.clearContext();
         return "update_success";
 
     }

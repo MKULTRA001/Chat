@@ -45,7 +45,7 @@ public class WebSecurityConfig{
                     try {
                         requests
                         .requestMatchers("/users", "/myUsername", "/chat_index", "/chat", "/chat-websocket" +
-                                "/app").authenticated()
+                                "/app", "/ChangePassword", "/updatePassword", "/updatePassword", "update_success").authenticated()
                         .anyRequest().permitAll()
                         .and()
                         .formLogin()
