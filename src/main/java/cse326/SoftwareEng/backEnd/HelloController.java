@@ -2,6 +2,7 @@ package cse326.SoftwareEng.backEnd;
 
 import cse326.SoftwareEng.database.AppController;
 import cse326.SoftwareEng.database.UserRepository;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,10 +21,10 @@ public class HelloController{
 
     /**
      * Basic controller to respond to messages
-     * <p>In: /app/test</p>
-     * <p>Out: /test/hello</p>
+     * <p>In: /app/chat</p>
+     * <p>Out: /chat/hello</p>
      * Please note that these are separate endpoints
-     * @param message incoming message (in this text example it should be a name)
+     * @param message incoming message
      * @return response to payload
      */
     @MessageMapping("/chat")
@@ -32,12 +33,11 @@ public class HelloController{
         return new TextMessage(message.getMessage());
     }
 
-
     /**
      * Respond to login attempts
      * <p>In: /app/name</p>
      * <p>Out: /chat/hello</p>
-     * @param message incoming message (in this text example it should be a name)
+     * @param message incoming message (in this it should be a name)
      * @return response to payload
      */
     @MessageMapping("/name")
@@ -56,5 +56,18 @@ public class HelloController{
     @ResponseBody
     public String currentUserName() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    /**
+     * Handle direct message channel
+     * <p>In: /app/chat/private/{user1}/{user2}</p>
+     * <p>Out: /chat/private/{user1}/{user2}</p>
+     * @param message incoming message
+     * @return response to payload
+     */
+    @MessageMapping("/chat/private/{user1}")
+    @SendTo({"/chat/private/{user1}"})
+    public TextMessage directMessage(@DestinationVariable String user1, TextMessage message){
+        return new TextMessage(message.getMessage());
     }
 }
