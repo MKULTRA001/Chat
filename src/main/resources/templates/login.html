@@ -5,15 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="">
   <meta name="author" content="">
-  <title>Please sign in</title>
-  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-  <link href="https://getbootstrap.com/docs/4.0/examples/signin/signin.css" rel="stylesheet" crossorigin="anonymous"/>
+  <title>Sign In</title>
+  <!-- Font Awesome CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
+<style>
+  body{
+    font-family: sans-serif;
+    background-color:#333333;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    min-height: 80vh;
+    align-items: center;
+  }
+  h1{
+    color: #2fa4e7;
+  }
+</style>
 <body>
-<div th:if="${param.error}" class="alert alert-danger">Invalid username or password.</div>
-<div class="container">
-  <form class="form-signin" method="post" action="/login">
-    <h2 class="form-signin-heading">Please sign in: </h2>
+<div class="container text-center">
+  <div>
+    <h1>Sign In</h1>
+  </div>
+  <form class="form-signin" method="post" action="/login" style="max-width: 18em; margin: 0 auto;">
+    <div th:if="${param.error}" class="alert alert-danger">Invalid username or password.</div>
     <p>
       <label for="username" class="sr-only">Username</label>
       <input type="text" id="username" name="username" class="form-control" placeholder="Username" required autofocus>
@@ -25,4 +44,6 @@
     <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
   </form>
 </div>
+
+
 </body></html>

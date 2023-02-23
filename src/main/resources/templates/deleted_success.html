@@ -31,12 +31,19 @@
         background-size: cover;
         justify-content: center;
     }
+    h4{
+        color: rgba(255, 255, 255, .5);
+    }
+
+    a{
+        color: #fff;
+    }
 </style>
 <body>
 <div class="container text-center main">
     <h3>You have Deleted your account successfully!</h3>
     <h4><a th:href="@{/login}">Click here to Log in with a different account</a></h4>
-    <h5><a th:href="@{/register}">Click here to make a new account</a></h5>
+    <h4><a th:href="@{/register}">Click here to make a new account</a></h4>
 </div>
 
 </body>

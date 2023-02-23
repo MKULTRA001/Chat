@@ -71,17 +71,7 @@
 
 </style>
 <body>
-<div class="cover-container">
-<div class="container text-center">
-    <div>
-
-
-
-    </div>
-    <div>
-        <h1>List of Users</h1>
-    </div>
-
+<div class="container text-center cover-container">
     <div>
         <h3>Chat</h3>
         <nav class="nav nav-masthead">
@@ -112,7 +102,7 @@
     <div class="main">
         <h1 class="cover-heading">List of Users.</h1>
             <form th:action="@{/users.html}" method="post">
-                <table class="table table-striped table-bordered">
+                <table class="table table-bordered">
                     <thead class="thead-dark">
                     <tr>
                         <th>User ID</th>

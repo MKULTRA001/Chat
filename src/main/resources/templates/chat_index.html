@@ -8,47 +8,43 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script type="text/javascript" th:src="@{/static/testLogic.js}"></script>
 </head>
-<body>
-<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
-    enabled. Please enable
-    Javascript and reload this page!</h2></noscript>
-<div class="col-md-6">
-    <p id="username_Update">Username: </p>
-</div>
-<div id="main-content" class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <form class="form-inline">
-                <div class="form-group">
-                    <label for="connect">WebSocket connection:</label>
-                    <button id="connect" class="btn btn-default" type="submit">Connect</button>
-                    <button id="disconnect" class="btn btn-default" type="submit">Disconnect</button>
-                </div>
-            </form>
-        </div>
-        <div class="col-md-6">
-            <form class="form-inline">
-                <div class="form-group">
-                    <label for="input">Type Message</label>
-                    <input type="text" id="input" class="form-control" placeholder="Enter Message...">
-                    <button id="send" class="btn btn-default" type="submit" disabled="disabled">Send</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <table id="conversation" class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Chat</th>
-                </tr>
-                </thead>
-                <tbody id="text">
-                </tbody>
-            </table>
+<body style="background-color:#333333;">
+    <noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
+        enabled. Please enable
+        Javascript and reload this page!</h2>
+    </noscript>
+    <div id="main-content" class="container" style ="max-width: 800px; padding-top: 120px;">
+        <div class="row card container" style ="padding: 10px; color: white; background-color:#3B3B3B;">
+            <div class="text-center">
+                <h1>Main Chat</h1>
+            </div>
+                <form class="form-inline">
+                    <nav class="navbar justify-content-between">
+                        <p id="username_Update">Username: </p>
+                        <form class="form-inline">
+                            <div class="">
+                                <button id="connect" class="btn btn-success" type="submit">Connect</button>
+                                <button id="disconnect" class="btn btn-danger" type="submit">Disconnect</button>
+                            </div>
+                        </form>
+                    </nav>
+                </form>
+                <form class="form-inline">
+                    <div class="input-group">
+                        <input type="text" id="input" class="form-control" placeholder="Enter Message...">
+                        <button id="send" class="btn btn-primary" type="submit" disabled="disabled">Send</button>
+                    </div>
+                </form>
+                <table id="conversation" class="table" style="color: white;">
+                    <thead>
+                    <tr>
+                        <th>Chat</th>
+                    </tr>
+                    </thead>
+                    <tbody id="text">
+                    </tbody>
+                </table>
         </div>
     </div>
-</div>
 </body>
 </html>

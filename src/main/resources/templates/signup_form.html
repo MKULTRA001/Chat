@@ -2,8 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en-U">
 <head>
     <meta charset="ISO-8859-1">
-    <title>Sign Up - CodeJava</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.2.3/cerulean/bootstrap.min.css" rel="stylesheet">
+    <title>Sign Up</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.min.js"></script>
     <!-- Font Awesome CSS -->
@@ -22,14 +21,17 @@
         min-height: 80vh;
         align-items: center;
     }
+    h1{
+        color: #2fa4e7;
+    }
 </style>
 <body>
 <div class="container text-center">
     <div>
-        <h1>User Registration - Sign Up</h1>
+        <h1>Sign Up</h1>
     </div>
-    <form th:action="@{/process_register}" th:object="${user}"
-          method="post" style="max-width: 600px; margin: 0 auto;">
+    <form  th:action="@{/process_register}" th:object="${user}"
+           method="post" style="max-width: 300px; margin: 0 auto;">
         <div class="m-3">
             <div class="form-group row">
                 <label class="col-4 col-form-label">E-mail: </label>
@@ -40,7 +42,7 @@
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-4 col-form-label">Username </label>
+                <label class="col-4 col-form-label">Username</label>
                 <div class="col-8">
                     <label>
                         <input type="text" th:field="*{username}" class="form-control"
@@ -58,10 +60,11 @@
                 </div>
             </div>
             <div>
-                <button type="submit" class="btn btn-primary">Sign Up</button>
+                <button type="submit" class="btn btn-lg btn-primary btn-block">Sign Up</button>
             </div>
         </div>
     </form>
+
 </div>
 </body>
 </html>
