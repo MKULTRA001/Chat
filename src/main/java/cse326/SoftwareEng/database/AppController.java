@@ -1,29 +1,22 @@
 package cse326.SoftwareEng.database;
 
-import com.sun.net.httpserver.HttpContext;
 import cse326.SoftwareEng.backEnd.HelloController;
-import cse326.SoftwareEng.backEnd.TextMessage;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.net.HttpCookie;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 @Controller
 @Import(HelloController.class)
@@ -54,6 +47,8 @@ public class AppController {
         Date javaDate = new Date();
         user.setCreatedAt(new Timestamp(javaDate.getTime()));
         user.setUpdated_at(new Timestamp(javaDate.getTime()));
+        user.setVerificationCode(-1);
+        user.setCode_timestamp(new Timestamp(javaDate.getTime()));
         userRepo.save(user);
         return "register_success";
     }
@@ -114,5 +109,28 @@ public class AppController {
             new SecurityContextLogoutHandler().logout(request, null, null);
         return "update_success";
         }
+    }
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    public void sendEmail(String to, String subject, String text) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        //message.setFrom("chat@cs.nmt.edu");
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(text);
+        System.out.print("Email sent!");
+        mailSender.send(message);
+    }
+
+    public void sendCode(User user, int code) {
+        String text = "<p>Hello " + user.getUsername() + "</p>"
+                + "<p>Your verification code is: "
+                + "<p><b>" + code + "</b></p>"
+                + "<br>"
+                + "<p>Note: this code is set to expire in 5 minutes.</p>"
+                + "<p>The Chat Team</p>";
+        sendEmail(user.getEmail(), "Here's your verification code", text);
     }
 }

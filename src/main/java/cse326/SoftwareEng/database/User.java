@@ -39,6 +39,14 @@ public class User {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updated_at;
 
+    @Column(name = "verification_code")
+    private int verification_code;
+    @Column(name = "code_timestamp")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date code_timestamp;
+
+    @Column(name = "verification")
+    private boolean verification;
 
     public int getId() {
         return id;
@@ -100,6 +108,26 @@ public class User {
         this.updated_at = updated_at;
     }
 
+    public int getVerificationCode(){
+        return this.verification_code;
+    }
+    public void setVerificationCode(int verification_code) {
+        this.verification_code = verification_code;
+    }
+
+    public Date getCode_timestamp(){
+        return this.code_timestamp;
+    }
+    public void setCode_timestamp(Date code_timestamp) {
+        this.code_timestamp = code_timestamp;
+    }
+
+    public Boolean getVerification(){
+        return this.verification;
+    }
+    public void setVerification(Boolean verification) {
+        this.verification = verification;
+    }
     @Override
     public String toString() {
         return "User{" +
