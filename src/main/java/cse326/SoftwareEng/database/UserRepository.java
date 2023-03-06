@@ -4,12 +4,16 @@
 
 
 package cse326.SoftwareEng.database;
+import cse326.SoftwareEng.database.User;
 import jakarta.transaction.Transactional;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 /*JpaRepository provides a set of standard CRUD (Create, Read, Update, Delete) methods */
+@Repository("userRepo")
 public interface UserRepository extends JpaRepository<User, Long> {
     /*@Query annotation is used to define the query that will be passed to the database.*/
     @Query("SELECT u FROM User u WHERE u.username = ?1")

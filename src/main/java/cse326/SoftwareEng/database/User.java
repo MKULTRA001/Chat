@@ -8,7 +8,9 @@
 
 package cse326.SoftwareEng.database;
 import jakarta.persistence.*;
+
 import java.util.Date;
+import java.util.HashSet;
 
 
 /*Designates this file as an entity and assigns the table with the name "user" */
@@ -47,6 +49,8 @@ public class User {
 
     @Column(name = "verification")
     private boolean verification;
+
+
 
     public int getId() {
         return id;

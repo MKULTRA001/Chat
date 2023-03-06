@@ -1,7 +1,5 @@
 package cse326.SoftwareEng.backEnd;
 
-import cse326.SoftwareEng.database.AppController;
-import cse326.SoftwareEng.database.UserRepository;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
