@@ -1,6 +1,9 @@
-package cse326.SoftwareEng.database.userDB;
+/*Configuration file for the user_info database. Note this handles how Spring connects to the database*/
 
+package cse326.SoftwareEng.database.userDB;
 import cse326.SoftwareEng.database.userDB.User;
+import jakarta.persistence.EntityManagerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -10,38 +13,38 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "cse326.SoftwareEng.database",
-        entityManagerFactoryRef = "userEntityManagerFactory",
-        transactionManagerRef= "userTransactionManager")
+@EnableJpaRepositories(basePackages = "cse326.SoftwareEng.database.userDB")
 public class UserConfig {
 
 
     @Primary
-    @Bean
+    @Bean(name = "dataSource")
     @ConfigurationProperties(prefix="spring.user.datasource")
     public DataSource userDataSource() {
         return DataSourceBuilder.create().build();
     }
 
-    @Bean
+    @Bean(name = "entityManagerFactory")
+    @Primary
     public LocalContainerEntityManagerFactoryBean userEntityManagerFactory(
-            EntityManagerFactoryBuilder builder) {
+            EntityManagerFactoryBuilder builder,
+            @Qualifier("dataSource") DataSource dataSource) {
         return builder
-                .dataSource(userDataSource())
-                .packages(User.class)
+                .dataSource(dataSource)
+                .packages("cse326.SoftwareEng.database.userDB")
                 .persistenceUnit("userPU")
                 .build();
     }
 
-    @Bean
-    public JpaTransactionManager userTransactionManager(
-            EntityManagerFactoryBuilder builder) {
-        JpaTransactionManager transactionManager = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(userEntityManagerFactory(builder).getObject());
-        return transactionManager;
+    @Primary
+    @Bean(name = "transactionManager")
+    public PlatformTransactionManager transactionManager(
+            @Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
+        return new JpaTransactionManager(entityManagerFactory);
     }
 }
