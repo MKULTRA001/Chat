@@ -1,6 +1,6 @@
-package cse326.SoftwareEng.database;
+package cse326.SoftwareEng.database.userDB;
 
-import cse326.SoftwareEng.database.User;
+import cse326.SoftwareEng.database.userDB.User;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;

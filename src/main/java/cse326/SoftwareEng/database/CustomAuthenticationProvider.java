@@ -1,5 +1,7 @@
 package cse326.SoftwareEng.database;
 
+import cse326.SoftwareEng.database.userDB.User;
+import cse326.SoftwareEng.database.userDB.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;

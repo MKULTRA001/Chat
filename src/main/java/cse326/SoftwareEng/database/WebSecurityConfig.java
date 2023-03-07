@@ -2,6 +2,7 @@ package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
 import cse326.SoftwareEng.backEnd.HelloSocketConfig;
+import cse326.SoftwareEng.database.userDB.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,6 +1,8 @@
 package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
+import cse326.SoftwareEng.database.userDB.User;
+import cse326.SoftwareEng.database.userDB.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
