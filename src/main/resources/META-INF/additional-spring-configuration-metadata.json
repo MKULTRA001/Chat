@@ -1,0 +1,43 @@
+{
+  "properties": [
+    {
+      "name": "spring.user.datasource.jdbc-url",
+      "type": "java.lang.String",
+      "description": "Description for spring.user.datasource.jdbc-url."
+    },
+    {
+      "name": "spring.user.datasource.username",
+      "type": "java.lang.String",
+      "description": "Description for spring.user.datasource.username."
+    },
+    {
+      "name": "spring.user.datasource.password",
+      "type": "java.lang.String",
+      "description": "Description for spring.user.datasource.password."
+    },
+    {
+      "name": "spring.user.datasource.driver-class-name",
+      "type": "java.lang.String",
+      "description": "Description for spring.user.datasource.driver-class-name."
+    },
+    {
+      "name": "spring.message.datasource.jdbc-url",
+      "type": "java.lang.String",
+      "description": "Description for spring.message.datasource.jdbc-url."
+    },
+    {
+      "name": "spring.message.datasource.username",
+      "type": "java.lang.String",
+      "description": "Description for spring.message.datasource.username."
+    },
+    {
+      "name": "spring.message.datasource.password",
+      "type": "java.lang.String",
+      "description": "Description for spring.message.datasource.password."
+    },
+    {
+      "name": "spring.message.datasource.driver-class-name",
+      "type": "java.lang.String",
+      "description": "Description for spring.message.datasource.driver-class-name."
+    }
+  ] }
