@@ -84,6 +84,7 @@ $(function () {
     $("form").on('submit', function (e) {
         e.preventDefault();
     });
+    getUname().then(r => $("#username_Update").replaceWith("Username: " + r));
     name();
     $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
