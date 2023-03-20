@@ -4,6 +4,7 @@ let open = false;
 
 function connect() {
     getUname().then(function (response) {
+        const uname = response;
         if (stompClient == null || !open) {
                 //connect to the server endpoint
             const socket = new SockJS('/chat-websocket');
@@ -17,7 +18,16 @@ function connect() {
                     //this is for broadcast
                     stompClient.subscribe('/chat/hello', function (message) {
                         //this just expands the text section with a new one for the line
-                        $("#text").append("<tr><td>" + JSON.parse(message.body).message + "</td></tr>");
+                        let msg =  JSON.parse(message.body).message;
+                        const msgArray = msg.split(':');
+                        console.log('array: '+msgArray[1]);
+                        console.log('uname: '+uname);
+                        if(uname === msgArray[0]){
+                            $("#text").append("<tr bgcolor='green'><td>" + msg + "</td></tr>");
+                        }
+                        else{
+                            $("#text").append("<tr bgcolor='red'><td>" + msg + "</td></tr>");
+                        }
                     });
                     //this is for dm
                     stompClient.subscribe('/chat/private/'+response, function (message) {
