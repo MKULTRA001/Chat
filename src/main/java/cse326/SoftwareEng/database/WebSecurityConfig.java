@@ -2,6 +2,9 @@ package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
 import cse326.SoftwareEng.backEnd.HelloSocketConfig;
+import cse326.SoftwareEng.database.authDB.CustomAuthenticationProvider;
+import cse326.SoftwareEng.database.authDB.CustomWebAuthenticationDetailsSource;
+import cse326.SoftwareEng.database.authDB.LoginFailureHandler;
 import cse326.SoftwareEng.database.userDB.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +65,9 @@ public class WebSecurityConfig{
                     .defaultSuccessUrl("/users", true)
                     .failureHandler(loginFailureHandler)//.failureUrl("/login?error=true")
                     .permitAll()
+                    .and()
+                    .rememberMe().userDetailsService(this.userDetailsService())
+                    .key("uniqueAndSecret")
                     .and()
                     .logout().logoutSuccessUrl("/")
                     .deleteCookies("JSESSIONID")

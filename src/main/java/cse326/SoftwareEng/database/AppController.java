@@ -3,22 +3,27 @@ package cse326.SoftwareEng.database;
 import cse326.SoftwareEng.backEnd.HelloController;
 import cse326.SoftwareEng.database.userDB.User;
 import cse326.SoftwareEng.database.userDB.UserRepository;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.data.repository.query.Param;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 @Controller
 @Import(HelloController.class)
@@ -113,26 +118,99 @@ public class AppController {
         }
     }
 
+    @GetMapping("/forgot_password")
+    public String showForgotPasswordForm() {
+        return "forgot_password_form";
+    }
+
+    @PostMapping("/forgot_password")
+    public String processForgotPassword(HttpServletRequest request, Model model) {
+        String email = request.getParameter("email");
+        System.out.println("[Forgot] email:"+email);
+        User user = userRepo.findByEmail(email);
+        if (user == null) {
+            model.addAttribute("error", "Bad Email");
+        }
+        else{
+            Random rand = new Random();
+            int code = rand.nextInt(1000000);
+            Date date = new Date();
+            Timestamp timestamp = new Timestamp(date.getTime());
+            user.setCode_timestamp(timestamp);
+            user.setVerificationCode(code);
+            String message = Utility.getSiteURL(request) + "/reset_password?email=" + email + "&code=" + code;
+            sendMail(email, "subject", message);
+            model.addAttribute("message", "A reset password link has been sent to your email. Please check.");
+            System.out.println("Reset Email sent");
+        }
+        return "forgot_password_form";
+    }
+
+    @GetMapping("/reset_password")
+    public String showResetPasswordForm(@Param(value = "email") String email, @Param(value = "code") String code, Model model) {
+        User user = userRepo.findByEmail(email);
+        model.addAttribute("email", email);
+        model.addAttribute("code", code);
+
+        if (user == null || user.getVerificationCode() != Integer.parseInt(code)) {
+            model.addAttribute("message", "Invalid email or code");
+            model.addAttribute("title", "Reset your password");
+            System.out.println("[Reset Checking] 1st "+code);
+            return "message";
+        }
+
+        return "reset_password_form";
+    }
+
+    @PostMapping("/reset_password")
+    public String processResetPassword(HttpServletRequest request, Model model) {
+        String email = request.getParameter("email");
+        String code = request.getParameter("code");
+        String password = request.getParameter("password");
+
+        User user = userRepo.findByEmail(email);
+        model.addAttribute("title", "Reset your password");
+
+        Date date = new Date();
+        Timestamp timestamp = new Timestamp(date.getTime());
+
+        if (user == null
+                || Integer.parseInt(code) != user.getVerificationCode()
+                || timestamp.after(new Timestamp(user.getCode_timestamp().getTime()+ (300 * 1000L)))) {
+            model.addAttribute("message", "Invalid Requets");
+            System.out.println("[reset_password] Invalid");
+        }
+        else {
+            user.setPassword(password);
+            System.out.println("[reset_password] Password set");
+
+            model.addAttribute("message", "You have successfully changed your password.");
+        }
+        return "message";
+    }
+    public class Utility {
+        public static String getSiteURL(HttpServletRequest request) {
+            String siteURL = request.getRequestURL().toString();
+            return siteURL.replace(request.getServletPath(), "");
+        }
+    }
     @Autowired
-    private JavaMailSender mailSender;
+    private JavaMailSender javaMailSender;
 
-    public void sendEmail(String to, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        //message.setFrom("chat@cs.nmt.edu");
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-        System.out.print("Email sent!");
-        mailSender.send(message);
+    public void sendMail(String to, String subject, String text) {
+        try{
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom("chat@cs.nmt.edu");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true);
+            javaMailSender.send(message);
+        }
+        catch (Exception e) {
+            System.out.println("[EmailService] Error while Sending Mail to "+to+" "+e);
+        }
     }
 
-    public void sendCode(User user, int code) {
-        String text = "<p>Hello " + user.getUsername() + "</p>"
-                + "<p>Your verification code is: "
-                + "<p><b>" + code + "</b></p>"
-                + "<br>"
-                + "<p>Note: this code is set to expire in 5 minutes.</p>"
-                + "<p>The Chat Team</p>";
-        sendEmail(user.getEmail(), "Here's your verification code", text);
-    }
+
 }

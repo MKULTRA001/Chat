@@ -34,7 +34,7 @@
   <form class="form-signin" method="post" action="/login" style="max-width: 18em; margin: 0 auto;">
     <div th:if="${param.error}" th:utext="${session.SPRING_SECURITY_LAST_EXCEPTION.message}"
          class="alert alert-danger">Invalid username or password.</div>
-    <div th:if="${param.verify}" class="alert alert-primary">2FA is enabled.                    Check your email for your code.</div>
+    <div th:if="${param.verify}" class="alert alert-primary">2FA is enabled.<br> Check your email for your code.</div>
     <p>
       <label for="username" class="sr-only">Username</label>
       <input type="text" id="username" name="username" class="form-control" placeholder="Username" required autofocus>
@@ -47,8 +47,18 @@
       <label for="code" class="sr-only">Verification Code</label>
       <input type="numeric" maxlength="6" id="code" name="code" class="form-control" placeholder="Verification Code" required>
     </p>
+
+    <div class="col-8">
+      <div class="icheck-primary">
+        <input type="checkbox" id="remember" name="remember-me">
+        <label for="remember">
+          Remember Me
+        </label>
+      </div>
+    </div>
     <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
   </form>
+  <a th:href="@{/forgot_password}">Forgot your password?</a>
 </div>
 
 

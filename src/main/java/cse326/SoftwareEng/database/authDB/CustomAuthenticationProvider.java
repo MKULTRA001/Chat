@@ -1,5 +1,6 @@
-package cse326.SoftwareEng.database;
+package cse326.SoftwareEng.database.authDB;
 
+import cse326.SoftwareEng.database.EmailService;
 import cse326.SoftwareEng.database.userDB.User;
 import cse326.SoftwareEng.database.userDB.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +11,11 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Random;
-
 public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
     @Autowired
     private UserRepository userRepository;
@@ -55,7 +56,6 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
             }
         }
     }
-
 }
 
 

@@ -1,4 +1,4 @@
-package cse326.SoftwareEng.database;
+package cse326.SoftwareEng.database.authDB;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
