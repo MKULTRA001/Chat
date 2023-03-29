@@ -19,7 +19,7 @@ public class UserMessageDB {
 
 
 
-    @OneToMany(mappedBy = "userMessageDB")
+    @OneToMany(mappedBy = "user")
     private List<Message> messages;
 
     /*Constructor for UserMessageDB class where id and username are instantiated respectively*/
