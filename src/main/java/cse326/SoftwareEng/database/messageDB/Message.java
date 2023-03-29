@@ -1,10 +1,13 @@
-/*This class contains the Message table within the user_message database */
+/*This class contains the Message table within the user_message database. Notably different from the UserMessageDB class as that is part of a different database*/
 
 
 
 
 package cse326.SoftwareEng.database.messageDB;
 import jakarta.persistence.*;
+
+import java.util.Date;
+
 @Entity
 @Table(name = "Message")
 public class Message {
@@ -16,12 +19,27 @@ public class Message {
     @Column(name = "message")
     private String message;
 
-
+    @Column(name = "send_time",updatable = false)
+    /*Temporal is used to annotate a Java date with TIMESTAMP corresponding to the data and time*/
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date sendTime;
 
     /*Mapping foreign key from UserMessageDB user_id to Messages Entity*/
     @ManyToOne
     @JoinColumn(name = "user_id")
     private UserMessageDB user;
+
+    /*Constructor for Message class where message_id, message, sendTime, and user are instantiated respectively*/
+    public Message(int message_id, String message, Date sendTime, UserMessageDB user) {
+        this.message_id = message_id;
+        this.message = message;
+        this.sendTime = sendTime;
+        this.user = user;
+    }
+    /*Default constructor for Message class*/
+    public Message() {
+
+    }
 
 
     public int getMessage_id() {
@@ -38,5 +56,21 @@ public class Message {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Date getSendTime() {
+        return sendTime;
+    }
+
+    public void setSendTime(Date sendTime) {
+        this.sendTime = sendTime;
+    }
+
+    public UserMessageDB getUser() {
+        return user;
+    }
+
+    public void setUser(UserMessageDB user) {
+        this.user = user;
     }
 }

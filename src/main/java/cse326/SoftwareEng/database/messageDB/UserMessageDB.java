@@ -19,8 +19,19 @@ public class UserMessageDB {
 
 
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "userMessageDB")
     private List<Message> messages;
+
+    /*Constructor for UserMessageDB class where id and username are instantiated respectively*/
+    public UserMessageDB(int id,String username) {
+        this.id = id;
+        this.username = username;
+    }
+
+    /*Default constructor for UserMessageDB class*/
+    public UserMessageDB() {
+
+    }
 
 
     public long getId() {
@@ -49,5 +60,13 @@ public class UserMessageDB {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 '}';
+    }
+
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
     }
 }

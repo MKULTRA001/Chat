@@ -1,7 +1,6 @@
 /**
  * Directly called to manifest the MYSQL table "user" in the database "user_info". It is able to define constraints and rename elements of the table using Spring's own syntax
- * Note: If the table "user" does not exist, upon running Spring the table will automatically be generated with the specified parameters below
- *
+ * Note: If the table "user" does not exist, upon running Spring the table will automatically be generated with the specified parameters below*
  *
  */
 
@@ -10,7 +9,6 @@ package cse326.SoftwareEng.database.userDB;
 import jakarta.persistence.*;
 
 import java.util.Date;
-import java.util.HashSet;
 
 
 /*Designates this file as an entity and assigns the table with the name "user" */
@@ -49,6 +47,23 @@ public class User {
 
     @Column(name = "verification")
     private boolean verification;
+
+    /*Default constructor for User class*/
+    public User(){
+
+    }
+    /*Constructor for User class where id, email, password, username, createdAt, updated_at, verification_code, code_timestamp, and verification are instantiated respectively*/
+    public User(int id, String email, String password, String username, Date createdAt, Date updated_at, int verification_code, Date code_timestamp, boolean verification) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.username = username;
+        this.createdAt = createdAt;
+        this.updated_at = updated_at;
+        this.verification_code = verification_code;
+        this.code_timestamp = code_timestamp;
+        this.verification = verification;
+    }
 
 
 
