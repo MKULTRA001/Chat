@@ -3,15 +3,15 @@
 package cse326.SoftwareEng.database.messageDB;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 
 @Entity
 @Table(name = "userMessageDB")
 public class UserMessageDB {
     @Id
-    @GeneratedValue(generator="increment")
     @Column(name = "user_id")
-    private int id;
+    private String user_id;
 
 
     @Column(name = "username", nullable = false, length = 25)
@@ -23,8 +23,9 @@ public class UserMessageDB {
     private List<Message> messages;
 
     /*Constructor for UserMessageDB class where id and username are instantiated respectively*/
-    public UserMessageDB(int id,String username) {
-        this.id = id;
+    public UserMessageDB(String username) {
+        /*sample UUID  123e4567-e89b-12d3-a456-426655440000*/
+        this.user_id = UUID.randomUUID().toString();
         this.username = username;
     }
 
@@ -34,13 +35,13 @@ public class UserMessageDB {
     }
 
 
-    public long getId() {
-        return id;
+    public String getId() {
+        return user_id;
     }
 
 
-    public void setId(int id) {
-        this.id = id;
+    public void setId(String user_id) {
+        this.user_id = user_id;
     }
 
 
@@ -57,7 +58,7 @@ public class UserMessageDB {
     @Override
     public String toString() {
         return "User{" +
-                "id=" + id +
+                "id=" + user_id +
                 ", username='" + username + '\'' +
                 '}';
     }
@@ -68,5 +69,16 @@ public class UserMessageDB {
 
     public void setMessages(List<Message> messages) {
         this.messages = messages;
+    }
+
+    public void addMessage(Message message) {
+        this.messages.add(message);
+        message.setUser(this);
+    }
+
+
+    public void removeMessage(Message message) {
+        this.messages.remove(message);
+        message.setUser(null);
     }
 }

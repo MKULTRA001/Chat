@@ -14,4 +14,14 @@ public interface UserRepositoryMessageDB extends JpaRepository<UserMessageDB, Lo
     @Query("SELECT u FROM UserMessageDB u WHERE u.username = ?1")
     UserMessageDB findByUsername(String Username);
 
+
+    @Query("SELECT u FROM UserMessageDB u WHERE u.user_id = ?1")
+    UserMessageDB findByID(String id);
+
+
+
+
+
+
+
 }

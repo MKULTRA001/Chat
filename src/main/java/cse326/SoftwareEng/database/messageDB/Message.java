@@ -7,14 +7,14 @@ package cse326.SoftwareEng.database.messageDB;
 import jakarta.persistence.*;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Table(name = "Message")
 public class Message {
     @Id
-    @GeneratedValue(generator="increment")
     @Column(name = "message_id")
-    private int message_id;
+    private String message_id;
 
     @Column(name = "message")
     private String message;
@@ -30,8 +30,8 @@ public class Message {
     private UserMessageDB user;
 
     /*Constructor for Message class where message_id, message, sendTime, and user are instantiated respectively*/
-    public Message(int message_id, String message, Date sendTime, UserMessageDB user) {
-        this.message_id = message_id;
+    public Message(String message, Date sendTime, UserMessageDB user) {
+        this.message_id = UUID.randomUUID().toString();
         this.message = message;
         this.sendTime = sendTime;
         this.user = user;
@@ -42,11 +42,11 @@ public class Message {
     }
 
 
-    public int getMessage_id() {
+    public String getMessage_id() {
         return message_id;
     }
 
-    public void setMessage_id(int message_id) {
+    public void setMessage_id(String message_id) {
         this.message_id = message_id;
     }
 
