@@ -3,11 +3,11 @@ package cse326.SoftwareEng.database;
 import cse326.SoftwareEng.database.userDB.User;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Component;
 
-@SpringBootApplication
+@Component
 public class EmailService {
     private JavaMailSender javaMailSender;
 
