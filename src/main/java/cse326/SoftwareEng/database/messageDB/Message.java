@@ -41,7 +41,11 @@ public class Message {
 
     }
 
-
+    /**
+     * Used to fetch UUID message_id
+     * @return message_id
+     * @throws  NullPointerException when on ID is found
+     */
     public String getMessage_id() {
         return message_id;
     }
@@ -72,5 +76,15 @@ public class Message {
 
     public void setUser(UserMessageDB user) {
         this.user = user;
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "message_id='" + message_id + '\'' +
+                ", message='" + message + '\'' +
+                ", sendTime=" + sendTime +
+                ", user=" + user.getUsername() +
+                '}';
     }
 }

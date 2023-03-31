@@ -2,22 +2,45 @@ package cse326.SoftwareEng.database.messageDB;
 
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
+    /**
+     *
+     * @param message_id UUID message_id
+     * @return Message with  passed message_id. Returns null if no message with passed message_id exists
+     *
+     */
     @Query("SELECT m FROM Message m WHERE m.message_id = ?1")
     Message findByMessageID(String message_id);
 
+    /**
+     *
+     * @param message_id UUID message_id
+     * @return  Deletes Message with message_id.
+     *
+     */
+
+    @Modifying
     @Transactional
     @Query("DELETE FROM Message m WHERE m.message_id = ?1")
-    void deleteByMessageID(String message_id);
+    int deleteByMessageID(String message_id);
 
 
-
-
+    /**
+     *
+     * @param user_id UUID user_id
+     * @return List of all messages with passed user_id
+     *
+     */
+    @Query("SELECT m FROM Message m WHERE m.user.user_id = ?1")
+    List<Message> findAllMessagesByUserId(String user_id);
 
 
 }
