@@ -1,6 +1,9 @@
 package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
+import cse326.SoftwareEng.database.messageDB.MessageRepository;
+import cse326.SoftwareEng.database.messageDB.UserMessageDB;
+import cse326.SoftwareEng.database.messageDB.UserRepositoryMessageDB;
 import cse326.SoftwareEng.database.userDB.User;
 import cse326.SoftwareEng.database.userDB.UserRepository;
 import jakarta.mail.internet.MimeMessage;
@@ -30,9 +33,12 @@ import java.util.Random;
 public class AppController {
 
     private final UserRepository userRepo;
-
-    public AppController(UserRepository userRepo) {
+    private final UserRepositoryMessageDB userRepositoryMessageDB;
+    private final MessageRepository messageRepository;
+    public AppController(UserRepository userRepo, UserRepositoryMessageDB userRepositoryMessageDB, MessageRepository messageRepository) {
         this.userRepo = userRepo;
+        this.userRepositoryMessageDB = userRepositoryMessageDB;
+        this.messageRepository = messageRepository;
     }
 
     @RequestMapping("/")
@@ -57,6 +63,8 @@ public class AppController {
         user.setVerificationCode(-1);
         user.setCode_timestamp(new Timestamp(javaDate.getTime()));
         userRepo.save(user);
+        UserMessageDB userMessageDB = new UserMessageDB(user.getUsername());
+        userRepositoryMessageDB.save(userMessageDB);
         return "register_success";
     }
 
@@ -70,6 +78,10 @@ public class AppController {
     public String deleteAccount(HttpServletRequest request){
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
         userRepo.deleteByUsername(userName);
+       if(messageRepository.existsByUserId(userName)) {
+           messageRepository.deleteUser(userName);
+       }
+        userRepositoryMessageDB.deleteByUsername(userName);
         SecurityContextHolder.clearContext();
         new SecurityContextLogoutHandler().logout(request, null, null);
         return "deleted_success";

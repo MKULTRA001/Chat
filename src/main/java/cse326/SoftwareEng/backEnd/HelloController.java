@@ -1,5 +1,9 @@
 package cse326.SoftwareEng.backEnd;
 
+import cse326.SoftwareEng.database.messageDB.Message;
+import cse326.SoftwareEng.database.messageDB.MessageRepository;
+import cse326.SoftwareEng.database.messageDB.UserMessageDB;
+import cse326.SoftwareEng.database.messageDB.UserRepositoryMessageDB;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -8,6 +12,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Test controller
@@ -16,6 +24,21 @@ import org.springframework.web.bind.annotation.ResponseBody;
  */
 @Controller
 public class HelloController{
+    private final UserRepositoryMessageDB userRepositoryMessageDB;
+    private final MessageRepository messageRepository;
+    public HelloController(UserRepositoryMessageDB userRepositoryMessageDB, MessageRepository messageRepository) {
+        this.userRepositoryMessageDB = userRepositoryMessageDB;
+        this.messageRepository = messageRepository;
+    }
+    private String convertMessagesToJson(List<Message> messages) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(messages);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "[]"; // Return an empty JSON array if there's an error
+        }
+    }
 
     /**
      * Basic controller to respond to messages
@@ -28,6 +51,10 @@ public class HelloController{
     @MessageMapping("/chat")
     @SendTo("/chat/hello")
     public TextMessage helloWorld(TextMessage message){
+        String username = message.getMessage().split(":")[0];
+        UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
+        Message dbMessage = new Message(message.getMessage(), new Date(), user);
+        messageRepository.save(dbMessage);
         return new TextMessage(message.getMessage());
     }
 
@@ -39,12 +66,18 @@ public class HelloController{
      * @return response to payload
      */
     @MessageMapping("/name")
-    @SendTo("/chat/hello")
-    public TextMessage login(TextMessage message){
-        //You can do whatever handling you want with this uname via message.getMessage()
-        //Currently, this is managed by a client-side variable for display only.
-        //In theory, though, you should be able to message other objects and have them do whatever processes you need
-        return new TextMessage(message.getMessage() + " Has Connected!");
+    @SendTo("/chat/login")
+    public TextMessage login(TextMessage message) {
+        String username = message.getMessage();
+        UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
+        StringBuilder response = new StringBuilder("Welcome back, " + username + "! Your old messages are:\n");
+        // Fetch old messages using the new method in MessageRepository
+        List<String> oldMessages = messageRepository.findAllMessagesByUsername(username);
+        for (String oldMessage : oldMessages) {
+            response.append(oldMessage).append("\n");
+        }
+        System.out.println(response.toString());
+        return new TextMessage(response.toString());
     }
     @RequestMapping("/chat_index")
     public String TestIndex(){

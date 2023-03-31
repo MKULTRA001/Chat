@@ -14,6 +14,19 @@ function connect() {
                 //connect and set up subscription to hello endpoint
                 stompClient.connect({}, function (frame) {
                     console.log('Connected: ' + frame);
+                    stompClient.subscribe('/chat/login', function (message) {
+                        let oldMessages = JSON.parse(message.body).message.split('\n');
+                        for (let i = 0; i < oldMessages.length; i++) {
+                            if (oldMessages[i]) {
+                                let msgArray = oldMessages[i].split(':');
+                                if (uname === msgArray[0]) {
+                                    $("#text").append("<tr bgcolor='green'><td>" + oldMessages[i] + "</td></tr>");
+                                } else {
+                                    $("#text").append("<tr bgcolor='red'><td>" + oldMessages[i] + "</td></tr>");
+                                }
+                            }
+                        }
+                    });
                     //"function" is the callback: this is executed every time a message is found on this channel
                     //this is for broadcast
                     stompClient.subscribe('/chat/hello', function (message) {
@@ -34,6 +47,7 @@ function connect() {
                         //this just expands the text section with a new one for the line
                         $("#text").append("<tr><td><i>" + JSON.parse(message.body).message + "</i></td></tr>");
                     });
+                    name();
                 });
                 //enable name button
                 $("#send").prop("disabled", false);
