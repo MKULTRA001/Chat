@@ -38,7 +38,7 @@ public class Message {
     }
     /*Default constructor for Message class*/
     public Message() {
-
+        this.message_id = UUID.randomUUID().toString();
     }
 
     /**
