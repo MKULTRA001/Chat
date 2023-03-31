@@ -31,7 +31,7 @@ public class UserMessageDB {
 
     /*Default constructor for UserMessageDB class*/
     public UserMessageDB() {
-
+        this.user_id = UUID.randomUUID().toString();
     }
 
 
