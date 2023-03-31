@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -33,14 +34,25 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     int deleteByMessageID(String message_id);
 
 
+
     /**
      *
      * @param user_id UUID user_id
-     * @return List of all messages with passed user_id
+     * @return List of all messages with passed user_id sorted by time in descending order ex 2024,today,1928
      *
      */
-    @Query("SELECT m FROM Message m WHERE m.user.user_id = ?1")
-    List<Message> findAllMessagesByUserId(String user_id);
+    @Query("SELECT m FROM Message m WHERE m.user.user_id = ?1 ORDER BY m.sendTime DESC")
+    List<Message> findAllMessagesByUserIdSortedByTimeDesc(String user_id);
+
+
+
+    /**
+     *
+     * @return List of all messages in  Message table by time in ascending order
+     *
+     */
+    @Query("SELECT m FROM Message m ORDER BY m.sendTime DESC ")
+    List<Message> findAllByOrderByTimeDesc();
 
 
 }

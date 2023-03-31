@@ -1,21 +1,17 @@
 /**This class tests the MessageRepository class using an H2 database*/
 
 package cse326.SoftwareEng.database.messageDB;
-
-import cse326.SoftwareEng.database.userDB.User;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
+
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.AssertionErrors;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -41,18 +37,43 @@ public class MessageRepositoryTest {
     private Message message2;
 
 
+    private Message message3;
+
+
     /*Initialize the database with a user and a message*/
     @BeforeEach
     public void setUp() {
+
         user = new UserMessageDB("alex");
         userRepoMessageDB.saveAndFlush(user);
 
 
 
-        message1 = new Message("hello,",new Date(),user);
+        message1 = new Message();
+        message1.setMessage("hello");
+        message1.setUser(user);
+        Calendar earlierDate = Calendar.getInstance();
+        earlierDate.set(1928, Calendar.DECEMBER, 31);
+        Date earlierDateTime = earlierDate.getTime();
+        message1.setSendTime(earlierDateTime);
         messageRepository.save(message1);
+
+
         message2 = new Message("world!",new Date(),user);
         messageRepository.save(message2);
+
+
+
+        message3 = new Message();
+        message3.setMessage("Desc test");
+        message3.setUser(user);
+        /*Set the date to 2024*/
+        Calendar laterDate = Calendar.getInstance();
+        laterDate.set(2024, Calendar.DECEMBER, 31);
+        Date laterDateAsDate = laterDate.getTime();
+        message3.setSendTime(laterDateAsDate);
+        messageRepository.save(message3);
+
     }
 
 
@@ -99,13 +120,26 @@ public class MessageRepositoryTest {
 
     }
 
+    @Test
+    public void findAllMessagesByUserIdSortedByTimeDescTest(){
+        List<Message> messages = messageRepository.findAllMessagesByUserIdSortedByTimeDesc(user.getId());
+        for(Message m : messages){
+            System.out.println(m.getMessage());
+        }
+        /*The first message should be the latest message (2024) */
+        Assertions.assertEquals(messages.get(0).getMessage_id(),message3.getMessage_id());
+    }
+
+
 
     @Test
-    public void findAllMessagesByUserIdTest(){
-        List<Message> messages = messageRepository.findAllMessagesByUserId(user.getId());
-        Assertions.assertEquals(messages.get(0).getMessage_id(),message1.getMessage_id());
-        Assertions.assertEquals(messages.get(1).getMessage_id(),message2.getMessage_id());
-
+    public void findAllByOrderByTimeDescTest(){
+        List<Message> messages = messageRepository.findAllByOrderByTimeDesc();
+        for(Message m : messages){
+            System.out.println(m.getMessage());
+        }
+        /*The first message should be the latest message (2024) */
+        Assertions.assertEquals(messages.get(0).getMessage_id(),message3.getMessage_id());
     }
 
 
