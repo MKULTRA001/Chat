@@ -1,50 +1,83 @@
 <!DOCTYPE html>
-<html lang="en-U">
+<html lang="en">
 <head>
-    <title>Hello WebSocket</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.2.3/cerulean/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/main.css">
+    <!-- [Credit] Some basic UI concepts are base from Discord and themeforest-->
+    <title>Chat</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script type="text/javascript" th:src="@{/static/testLogic.js}"></script>
 </head>
-<body style="background-color:#333333;">
-    <noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
-        enabled. Please enable
-        Javascript and reload this page!</h2>
-    </noscript>
-    <div id="main-content" class="container" style ="max-width: 800px; padding-top: 120px;">
-        <div class="row card container" style ="padding: 10px; color: white; background-color:#3B3B3B;">
-            <div class="text-center">
-                <h1>Main Chat</h1>
-            </div>
-                <form class="form-inline">
-                    <nav class="navbar justify-content-between">
-                        <p id="username_Update">Username: </p>
-                        <form class="form-inline">
-                            <div class="">
-                                <button id="connect" class="btn btn-success" type="submit">Connect</button>
-                                <button id="disconnect" class="btn btn-danger" type="submit">Disconnect</button>
-                            </div>
-                        </form>
-                    </nav>
-                </form>
-                <form class="form-inline">
-                    <div class="input-group">
-                        <input type="text" id="input" class="form-control" placeholder="Enter Message...">
+<script>
+    //Hide "Connect to Chat Room" button and display chat messages
+    function displaychat() {
+        document.getElementById("chat").style.visibility = "visible";
+        document.getElementById("connect").style.display = "none";
+    }
+</script>
+<body>
+<div style="flex-direction: row; height: 100%; display: flex; ">
+    <div class="nav">
+        <a th:href="@{/}">
+            <i class="fa fa-comments-o brand"></i>
+        </a>
+        <nav class="nav nav-minimal flex-row flex-grow-1 justify-content-between flex-xl-column justify-content-xl-center">
+            <a th:href="@{/chat_index}">
+                <i class="fa fa-comment-o item" style="color: #2fa4e7;"></i>
+            </a>
+            <a th:href="@{/contacts}">
+                <i class="fa fa-address-book-o item"></i>
+            </a>
+            <a th:href="@{/settings}">
+                <i class="fa fa-cog item"></i>
+            </a>
+        </nav>
+        <a th:href="@{/logout}">
+            <i class="fa fa-sign-out sign_out"></i>
+        </a>
+    </div>
+    <aside class="channels">
+        <div class="header">
+            <h3>Channels</h3>
+        </div>
+    </aside>
+    <main class="chat">
+        <div class="chat-initial">
+            <noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
+                enabled. Please enable
+                Javascript and reload this page!</h2>
+            </noscript>
+            <button class=" btn btn-outline-primary no-box-shadow" data-toggle="modal" id="connect" onClick="displaychat()">
+            Connect to Chat Room
+            </button>
+        </div>
+        <div class="chat-finial" >
+            <div class="chat-body" id="chat" style="visibility: hidden;">
+                <div class="header">
+                    <h3>Public Chat</h3>
+                </div>
+                <div class="chat-message">
+                    <table id="conversation" style="color: white;">
+                        <tbody id="text"></tbody>
+                    </table>
+                </div>
+                <form>
+                    <div class="input-group chat-input">
+                        <label for="input"></label><input type="text" id="input" class="form-control" style="background: #2d2d2d; border: 1px solid;" placeholder="Enter Message...">
                         <button id="send" class="btn btn-primary" type="submit" disabled="disabled">Send</button>
                     </div>
                 </form>
-                <table id="conversation" class="table" style="color: white;">
-                    <thead>
-                    <tr>
-                        <th>Chat</th>
-                    </tr>
-                    </thead>
-                    <tbody id="text">
-                    </tbody>
-                </table>
+            </div>
         </div>
-    </div>
+    </main>
+</div>
 </body>
 </html>

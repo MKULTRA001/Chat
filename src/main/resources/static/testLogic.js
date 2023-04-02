@@ -15,7 +15,7 @@ async function getUname() {
 // A function that appends a new message to the chat window
 function appendMessage(message, color) {
     // Append a new row to the table with the specified background color and message content
-    $("#text").append(`<tr bgcolor='${color}'><td>${message}</td></tr>`);
+    $("#text").append(`<tr style = 'color: ${color}'><td>${message}</td></tr>`);
 }
 
 // A function that establishes a WebSocket connection to the server and sets up subscriptions to different endpoints
@@ -157,3 +157,10 @@ $(function () {
     $("#disconnect").click(disconnect);
     $("#send").click(send);
 });
+
+
+//Hide "Connect to Chat Room" button and display chat messages
+function displaychat() {
+    document.getElementById("chat").style.visibility = "visible";
+    document.getElementById("connect").style.display = "none";
+}

@@ -62,7 +62,7 @@ public class WebSecurityConfig{
                     .authenticationDetailsSource(authenticationDetailsSource)
                     .usernameParameter("username")
                     .loginPage("/login")
-                    .defaultSuccessUrl("/users", true)
+                    .defaultSuccessUrl("/chat_index", true)
                     .failureHandler(loginFailureHandler)//.failureUrl("/login?error=true")
                     .permitAll()
                     .and()
