@@ -6,6 +6,8 @@ package cse326.SoftwareEng.backEnd;
 public class TextMessage {
     private String message;
     private String uname;
+    private String time;
+    private String messageId;
 
     public TextMessage(){}
     public TextMessage(String message){
@@ -18,6 +20,16 @@ public class TextMessage {
         this.uname = uname;
     }
 
+    public TextMessage(String message, String uname, String time, String messageId){
+        this.message = message;
+        this.uname = uname;
+        this.time = time;
+        this.messageId = messageId;
+        System.out.println("Message: " + message + " uname: " + uname + " time: " + time + " messageId: " + messageId);
+    }
+
     public String getMessage() {return message;}
-    public String getUname() {return message;}
+    public String getUname() {return uname;}
+    public String getTime() {return time;}
+    public String getMessageId() {return messageId;}
 }

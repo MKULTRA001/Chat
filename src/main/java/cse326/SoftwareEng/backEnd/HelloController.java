@@ -53,9 +53,13 @@ public class HelloController{
     public TextMessage helloWorld(TextMessage message){
         String username = message.getMessage().split(":")[0];
         UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
-        Message dbMessage = new Message(message.getMessage(), new Date(), user);
+        Date date = new Date();
+        Message dbMessage = new Message(message.getMessage(), date, user);
         messageRepository.save(dbMessage);
-        return new TextMessage(message.getMessage());
+        String messageId = dbMessage.getMessage_id();
+        TextMessage message1 = new TextMessage(message.getMessage(),username, date.toString(), messageId);
+        System.out.println(message1);
+        return message1;
     }
 
     /**
