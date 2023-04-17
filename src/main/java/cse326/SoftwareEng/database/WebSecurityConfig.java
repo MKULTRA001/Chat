@@ -54,8 +54,9 @@ public class WebSecurityConfig{
             .authorizeHttpRequests(requests -> {
                 try {
                     requests
-                    .requestMatchers("/users", "/myUsername", "/chat_index", "/chat", "/chat-websocket",
-                            "/app", "/name", "/ChangePassword", "/updatePassword").authenticated()
+                    .requestMatchers("/users", "/myUsername", "/chat_index","/chat", "/chat-websocket",
+                            "/contacts", "settings",
+                            "/app", "/name", "/changeUsername", "/ChangePassword", "/updatePassword").authenticated()
                     .anyRequest().permitAll()
                     .and()
                     .formLogin()

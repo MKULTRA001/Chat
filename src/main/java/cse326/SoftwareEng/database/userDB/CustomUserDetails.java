@@ -3,6 +3,7 @@ package cse326.SoftwareEng.database.userDB;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 
 public class CustomUserDetails implements UserDetails {
@@ -26,6 +27,10 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         return user.getUsername();
+    }
+
+    public String getCreated_at() {
+        return new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(user.getCreatedAt());
     }
 
     @Override

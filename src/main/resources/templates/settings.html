@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings</title>
+  <!-- Font Awesome CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="../static/main.css">
+</head>
+<script>
+  //Hide "Connect to Chat Room" button and display chat messages
+  function displayProfile() {
+    document.getElementById("profile").style.display= "block";
+    document.getElementById("security").style.display = "none";
+    document.getElementById("preference").style.display = "none";
+    document.getElementById("profile-bt").classList.add("highlight");
+    document.getElementById("security-bt").classList.remove("highlight");
+    document.getElementById("preference-bt").classList.remove("highlight");
+  }
+  function displaySecurity() {
+    document.getElementById("profile").style.display= "none";
+    document.getElementById("security").style.display = "block";
+    document.getElementById("preference").style.display = "none";
+    document.getElementById("profile-bt").classList.remove("highlight");
+    document.getElementById("security-bt").classList.add("highlight");
+    document.getElementById("preference-bt").classList.remove("highlight");
+  }
+  function displayPreference() {
+    document.getElementById("profile").style.display= "none";
+    document.getElementById("security").style.display = "none";
+    document.getElementById("preference").style.display = "block";
+    document.getElementById("profile-bt").classList.remove("highlight");
+    document.getElementById("security-bt").classList.remove("highlight");
+    document.getElementById("preference-bt").classList.add("highlight");
+  }
+</script>
+<style>
+  .navv{
+    background-color: #313338;
+    display: flex;
+    color: white;
+    list-style: none;
+    padding: .25rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .5);
+    border-bottom: .25rem solid transparent;
+    text-decoration: none;
+  }
+
+  .navv a{
+    padding: 1rem 1rem;
+  }
+
+
+  .section{
+    width: 1000px; margin-right: auto; margin-left: auto;
+    padding: 1em;
+    display:block;
+  }
+
+  .section-title{
+    //padding: 38px 0 6px;
+  }
+
+  .section-body{
+    padding: 1em 4em;
+    background-color: #313338;
+    color: white;
+  }
+
+  .left{
+    float: left;
+  }
+
+  .right{
+    float: right;
+  }
+
+  .page{
+    background-color: transparent;
+    margin: 1rem 1.5rem;
+    color: rgba(255, 255, 255, .5);
+    font-weight: 700;
+    border: none;
+    border-bottom: .25rem solid transparent;
+  }
+
+  .page:hover {
+    border-bottom-color: rgba(255, 255, 255, .25);
+  }
+
+  .highlight{
+    color: white;
+  }
+
+  .highlight:hover {
+    border-bottom-color: white;
+  }
+
+  p{
+    flex: 1;
+    align-self: center;
+  }
+
+  .ml-2, .mx-2 {
+    margin-left: .75rem !important;
+  }
+  .custom-switch {
+    padding-left: 2.25rem;
+
+  }
+  .custom-control {
+    position: relative;
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+
+
+</style>
+<body>
+<div style="display: flex;">
+  <div class="nav">
+    <a th:href="@{/}">
+      <i class="fa fa-comments-o brand"></i>
+    </a>
+    <nav class="nav flex-column justify-content-center">
+      <a th:href="@{/chat_index}">
+        <i class="fa fa-comment-o item"></i>
+      </a>
+      <a th:href="@{/contacts}">
+        <i class="fa fa-address-book-o item"></i>
+      </a>
+      <a th:href="@{/settings}">
+        <i class="fa fa-cog item" style="color: #2fa4e7;"></i>
+      </a>
+    </nav>
+    <a th:href="@{/logout}">
+      <i class="fa fa-sign-out sign_out"></i>
+    </a>
+  </div>
+  <main class="settings">
+    <div class="chat-body">
+      <div>
+        <nav class="navv justify-content-center">
+          <button class="page highlight" id ="profile-bt" onClick="displayProfile()">Profile</button>
+          <button class="page" id ="security-bt" onClick="displaySecurity()">Security</button>
+          <button class="page" id ="preference-bt" onClick="displayPreference()">Preference</button>
+        </nav>
+      </div>
+      <div id = "profile">
+        <div class = "section">
+          <h3 class = "section-title">Account Info</h3>
+          <div class = "section-body ">
+            <span>Account ID: </span>[[${id}]]<br>
+            <span> Creation Date: </span>[[${createdAt}]]
+          </div>
+        </div>
+        <div class = "section">
+          <h3 class = "section-title">Username</h3>
+          <div class = "section-body ">
+            <span>[[${username}]]</span>
+            <form th:action="@{/changeUsername}" method="post">
+              <div class="input-group chat-input">
+                <label for="username"></label>
+                <input type="text" id="username" name="username" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Username">
+                <button class="btn btn-primary" type="submit">Change</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class = "section">
+          <h3 class = "section-title">Email</h3>
+          <div class = "section-body">
+            <span>[[${email}]]</span>
+            <form th:action="@{/changeEmail}" method="post">
+              <div class="input-group chat-input">
+                <label for="email"></label>
+                <input type="text" id="email" name="email" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Email">
+                <button class="btn btn-primary" type="submit">Change</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div id = "security" style="display: none">
+        <div class = "section">
+          <h3 class = "section-title">Password</h3>
+          <div class = "section-body">
+            <form th:action="@{/changePassword}" method="post">
+              <div class=" chat-input">
+                <label for="currentPassword"></label>
+                <input type="text" id="currentPassword" name="currentPassword" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Current Password">
+                <label for="newPassword"></label>
+                <input type="text" id="newPassword" name="newPassword" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="New Password">
+                <label for="confirmPassword"></label>
+                <input type="text" id="confirmPassword" name="confirmPassword" class="form-control mb-4" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Confirm Password">
+                <button class="btn btn-primary " type="submit">Change</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class = "section">
+          <h3 class = "section-title">2FA</h3>
+          <div class = "section-body list-group-item py-2">
+            <div class="media align-items-center">
+              <div class="media-body">
+                Enable 2FA  [[${verification}]]
+              </div>
+              <div class="custom-control custom-switch ml-2">
+                <input type="checkbox" class="custom-control-input" id="v" checked="">
+                <label class="custom-control-label" for="quickSettingSwitch1"> </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id = "preference" style="display: none">
+        <div class = "section">
+          <h3 class = "section-title">Light Mode</h3>
+          <div class = "section-body list-group-item py-2">
+            <div class="media align-items-center">
+              <div class="media-body">
+                Enable
+              </div>
+              <div class="custom-control custom-switch ml-2">
+                <input type="checkbox" class="custom-control-input" id="quickSettingSwitch1" checked="">
+                <label class="custom-control-label" for="quickSettingSwitch1">&nbsp;</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

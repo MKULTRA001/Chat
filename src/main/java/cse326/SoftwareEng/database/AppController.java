@@ -19,10 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
+
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -67,13 +66,6 @@ public class AppController {
         userRepositoryMessageDB.save(userMessageDB);
         return "register_success";
     }
-
-    @RequestMapping("/users")
-    public String listUsers(Model model) {
-        List<User> listUsers = userRepo.findAll();
-        model.addAttribute("listUsers", listUsers);
-        return "users";
-    }
     @RequestMapping("/deleteAccount")
     public String deleteAccount(HttpServletRequest request){
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -91,6 +83,96 @@ public class AppController {
     public String userLogin() {
         return "login";
     }
+
+    @RequestMapping("/contacts")
+    public String listUsers(Model model) {
+        List<User> listUsers = userRepo.findAll();
+        model.addAttribute("listUsers", listUsers);
+        return "contacts";
+    }
+
+    @GetMapping("/settings")
+    public String settings(Model model) {
+        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        model.addAttribute("id", user.getId());
+        model.addAttribute("createdAt", user.getCreatedAt());
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("email", user.getEmail());
+        model.addAttribute("verification", user.getVerification());
+        //model.addAttribute("lightmode", user.getLightMode());
+        return "settings";
+    }
+
+    @RequestMapping( "/changeUsername")
+    public RedirectView  changeUsername(@RequestParam("username") String username, Authentication authentication, Model model) {
+        if(userRepo.findByUsername(username) == null){
+            User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+            //user.setUsername(username);
+            model.addAttribute("message", "Username has been change.");
+            System.out.println("[Username]"+username);
+        }
+        else
+            model.addAttribute("error", "Username is already taken.");
+        return new RedirectView("settings");
+    }
+
+    @RequestMapping( "/changeEmail")
+    public RedirectView  changeEmail(@RequestParam("email") String email,Authentication authentication,  Model model) {
+        if(userRepo.findByEmail(email) == null){
+            /*TODO Check if email format is correct*/
+            User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+            //user.setEmail(email);
+            model.addAttribute("message", "Email has been change.");
+            System.out.println("Email has been change.");
+        }
+        else
+            model.addAttribute("error", "Email is already in use.");
+        return new RedirectView("settings");
+    }
+
+    @RequestMapping( "/changePassword")
+    public RedirectView  changePassword(@RequestParam("currentPassword") String currentPassword,
+                                        @RequestParam("newPassword") String newPassword,
+                                        @RequestParam("confirmPassword") String confirmPassword,
+                                        Model model, HttpServletRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepo.findByUsername(auth.getName());
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        System.out.print("[Password]: " + confirmPassword);
+        if(!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            model.addAttribute("error", "The current password is incorrect.");
+        }
+        else if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("error", "The new password and confirm password do not match.");
+        }
+        else if(passwordEncoder.matches(newPassword, user.getPassword())) {
+            model.addAttribute("error", "The new password cannot be the same as the current password.");
+        }
+        else {
+            /*user.setPassword(passwordEncoder.encode(newPassword));
+            Date javaDate = new Date();
+            user.setUpdated_at(new Timestamp(javaDate.getTime()));
+            userRepo.save(user);
+            model.addAttribute("success", "Your password has been updated successfully.");
+            SecurityContextHolder.clearContext();
+            new SecurityContextLogoutHandler().logout(request, null, null);*/
+        }
+        return new RedirectView("settings");
+    }
+    @RequestMapping( "/changeVerification")
+    public RedirectView  change2FA(@RequestParam("2FA") boolean verification, Model model) {
+        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        //user.setVerification(verification);
+        System.out.println("[2FA]" + verification);
+        if(verification)
+            model.addAttribute("message", "2FA has been enable.");
+        else
+            model.addAttribute("message", "2FA has been disable.");
+        return new RedirectView("settings");
+    }
+
+
     @RequestMapping("/ChangePassword")
     public String ChangePassword() {
         return "ChangePassword";
