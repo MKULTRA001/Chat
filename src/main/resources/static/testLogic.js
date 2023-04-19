@@ -22,7 +22,8 @@ function appendMessage(message, color) {
 // Metadata included message; send message as full json object
 function appendMessage2(packet, color) {
     let sanitized = $('<div>').text(packet.message).html();
-    $("#text").append(`<tr style = 'color: ${color}' data-id = ${packet.messageId} data-uid = ${packet.uname} data-ts = ${packet.time}><td>${sanitized}</td></tr>`);
+    let ts = 'data-ts = \"' + packet.time + '\"';
+    $("#text").append(`<tr style = 'color: ${color}' data-id = ${packet.messageId} data-uid = ${packet.uname} ${ts}><td>${sanitized}</td></tr>`);
 }
 
 // Retrieve metadata from a message. article is DOMStringMap of HTML message element
