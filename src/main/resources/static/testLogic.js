@@ -15,7 +15,38 @@ async function getUname() {
 // A function that appends a new message to the chat window
 function appendMessage(message, color) {
     // Append a new row to the table with the specified background color and message content
-    $("#text").append(`<tr style = 'color: ${color}'><td>${message}</td></tr>`);
+    let sanitized = $('<div>').text(message).html();
+    $("#text").append(`<tr style = 'color: ${color}' data-id = 'id' data-uid = 'uid' data-ts = 'ts'><td>${sanitized}</td></tr>`);
+}
+
+// Metadata included message; send message as full json object
+function appendMessage2(packet, color) {
+    let sanitized = $('<div>').text(packet.message).html();
+    $("#text").append(`<tr style = 'color: ${color}' data-id = ${packet.messageId} data-uid = ${packet.uname} data-ts = ${packet.time}><td>${sanitized}</td></tr>`);
+}
+
+// Retrieve metadata from a message. article is DOMStringMap of HTML message element
+// This element should be obtained by whatever edit selector is applied to that element and passed to the function
+// For example, document.querySelector("#whatever identifier tag");
+// Updates should be sent to some new endpoint and automatically handled
+function getMessageData(article, requestType) {
+    let uid = article.dataset.id;
+    let mid = article.dataset.messageId;
+    getUname().then(function (uname) {
+        if(uname === uid){
+            if(requestType === "D"){
+                //perform deletion request to server
+                console.log("Delete request processed");
+            } else if(requestType === "E") {
+                //perform deletion request to server
+                console.log("Edit request processed");
+            } else {
+                console.log("Request of type \"" + requestType + "\" is unknown; request ignored");
+            }
+        } else {
+            console.log("Request of type \"" + requestType + "\" made on message not owned by user; request ignored.");
+        }
+    });
 }
 
 // A function that establishes a WebSocket connection to the server and sets up subscriptions to different endpoints
@@ -51,10 +82,11 @@ function connect() {
                 // Subscription to the '/chat/hello' endpoint
                 stompClient.subscribe('/chat/hello', function (message) {
                     // Parse the message body and split it into individual messages
-                    const msg = JSON.parse(message.body).message;
-                    const msgArray = msg.split(':');
+                    // const msg = JSON.parse(message.body).message;
+                    // const msgArray = msg.split(':');
                     // Append the message to the chat window
-                    appendMessage(msg, uname === msgArray[0] ? 'green' : 'red');
+                    // appendMessage(msg, uname === msgArray[0] ? 'green' : 'red');
+                    appendMessage2(JSON.parse(message.body), 'green');
                 });
 
                 // Subscription to the '/chat/private' endpoint with the user's own username appended
