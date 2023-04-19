@@ -9,40 +9,9 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link rel="stylesheet" href="../static/main.css">
+  <link rel="stylesheet" href="../static/contacts.css">
   <!-- [Credit] Some basic UI concepts are base from Discord and themeforest-->
 </head>
-<style>
-  .contacts-body{
-    display:flex;
-    flex-grow:1;
-    flex-flow:column;
-    min-width:0;
-    width:100%
-  }
-  .list{
-    display: flex;
-    height: 100%;
-    color: white;
-  }
-  .user-table{
-    color: white;
-    border: 1px solid #495057;
-    background: #2b2d31;
-    text-align: center;
-    width: 100%;
-    border-collapse: collapse;
-
-  }
-  .user-table th{
-    background: #495057;
-    padding: 5px 0;
-  }
-
-  .user-table td{
-    padding: 5px 0;
-  }
-
-</style>
 <body>
 <div style="flex-direction: row; height: 100%; display: flex; ">
   <div class="nav">
@@ -56,7 +25,7 @@
       <a th:href="@{/contacts}">
         <i class="fa fa-address-book-o item" style="color: #2fa4e7;"></i>
       </a>
-      <a th:href="@{/settings}">
+      <a th:href="@{/profile}">
         <i class="fa fa-cog item"></i>
       </a>
     </nav>
@@ -64,46 +33,29 @@
       <i class="fa fa-sign-out sign_out"></i>
     </a>
   </div>
-
-
-  <main class="chat">
-
-    <div class="chat-finial" >
-      <div class="contacts-body">
-        <div class="header">
-          <h3>Contacts</h3>
-        </div>
-        <div class= "mt-5" style="width: 600px; margin-left: auto; margin-right: auto;">
-
-          <form th:action="@{/contacts.html}" method="post">
-            <table class=" user-table">
-              <thead class="thead-dark">
-              <tr>
-                <th>User ID</th>
-                <th>E-mail</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr th:each="user: ${listUsers}">
-                <td th:text="${user.getId()}">User ID</td>
-                <td th:text="${user.getEmail()}">E-mail</td>
-              </tr>
-              </tbody>
-            </table>
-          </form>
-
-        </div>
-
-      </div>
+  <main class="main contacts">
+    <div class="header">
+      <h3>Contacts</h3>
+    </div>
+    <div class= "mt-5" style="width: 600px; margin-left: auto; margin-right: auto;">
+      <form th:action="@{/contacts.html}" method="post">
+        <table class=" user-table">
+          <thead class="thead-dark">
+          <tr>
+            <th>User ID</th>
+            <th>E-mail</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="user: ${listUsers}">
+            <td th:text="${user.getId()}">User ID</td>
+            <td th:text="${user.getEmail()}">E-mail</td>
+          </tr>
+          </tbody>
+        </table>
+      </form>
     </div>
   </main>
-
-
-
-
-
-
-
 </div>
 </body>
 </html>

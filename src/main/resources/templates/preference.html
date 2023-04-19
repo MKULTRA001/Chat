@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Preference</title>
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/main.css">
+    <link rel="stylesheet" href="../static/settings.css">
+</head>
+<body>
+<div style="display: flex;">
+    <div class="nav">
+        <a th:href="@{/}">
+            <i class="fa fa-comments-o brand"></i>
+        </a>
+        <nav class="nav flex-column justify-content-center">
+            <a th:href="@{/chat_index}">
+                <i class="fa fa-comment-o item"></i>
+            </a>
+            <a th:href="@{/contacts}">
+                <i class="fa fa-address-book-o item"></i>
+            </a>
+            <a th:href="@{/profile}">
+                <i class="fa fa-cog item" style="color: #2fa4e7;"></i>
+            </a>
+        </nav>
+        <a th:href="@{/logout}">
+            <i class="fa fa-sign-out sign_out"></i>
+        </a>
+    </div>
+    <main class="main settings">
+        <nav class="nav-setting justify-content-center">
+            <a th:href="@{/profile}">Profile</a>
+            <a th:href="@{/security}">Security</a>
+            <a th:href="@{/preference}" class="highlight">Preference</a>
+        </nav>
+        <div class="section mt-3">
+            <h3>Light Mode</h3>
+            <div class = "section-body list-group-item py-2">
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        Enable
+                    </div>
+                    <div class="custom-control custom-switch ml-2">
+                        <input type="checkbox" class="custom-control-input" id="quickSettingSwitch1" checked="">
+                        <label class="custom-control-label" for="quickSettingSwitch1">&nbsp;</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+.settings{
+    background-color: #2b2d31;
+}
+
+.nav-setting{
+    background-color: #313338;
+    display: flex;
+    list-style: none;
+    color: rgba(255, 255, 255, .5);
+    text-decoration: none;
+}
+
+.nav-setting a{
+    margin: 1rem 1.5rem;
+    color: rgba(255, 255, 255, .5);
+    font-weight: 700;
+    border-bottom: .25rem solid transparent;
+}
+
+.nav-setting a:hover {
+    border-bottom-color: rgba(255, 255, 255, .25);
+}
+
+.highlight{
+    color: white !important;
+}
+
+.highlight:hover {
+    border-bottom-color: white !important;
+}
+
+.section{
+    width: 800px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 1em;
+    display:block;
+}
+
+.section-body{
+    padding: 1em 4em;
+    background-color: #313338;
+    color: white;
+}
+
+.ml-2, .mx-2 {
+    margin-left: .75rem !important;
+}
+.custom-switch {
+    padding-left: 2.25rem;
+
+}
+.custom-control {
+    position: relative;
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.5rem;
+}

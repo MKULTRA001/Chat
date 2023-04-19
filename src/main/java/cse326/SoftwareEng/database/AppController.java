@@ -91,16 +91,13 @@ public class AppController {
         return "contacts";
     }
 
-    @GetMapping("/settings")
-    public String settings(Model model) {
+    @GetMapping("/profile")
+    public String profile(Model model) {
         User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
         model.addAttribute("id", user.getId());
         model.addAttribute("createdAt", user.getCreatedAt());
         model.addAttribute("username", user.getUsername());
-        model.addAttribute("email", user.getEmail());
-        model.addAttribute("verification", user.getVerification());
-        //model.addAttribute("lightmode", user.getLightMode());
-        return "settings";
+        return "profile";
     }
 
     @RequestMapping( "/changeUsername")
@@ -113,7 +110,7 @@ public class AppController {
         }
         else
             model.addAttribute("error", "Username is already taken.");
-        return new RedirectView("settings");
+        return new RedirectView("profile");
     }
 
     @RequestMapping( "/changeEmail")
@@ -127,7 +124,14 @@ public class AppController {
         }
         else
             model.addAttribute("error", "Email is already in use.");
-        return new RedirectView("settings");
+        return new RedirectView("profile");
+    }
+
+    @GetMapping("/security")
+    public String security(Model model) {
+        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        model.addAttribute("verification", user.getVerification());
+        return "security";
     }
 
     @RequestMapping( "/changePassword")
@@ -158,7 +162,7 @@ public class AppController {
             SecurityContextHolder.clearContext();
             new SecurityContextLogoutHandler().logout(request, null, null);*/
         }
-        return new RedirectView("settings");
+        return new RedirectView("security");
     }
     @RequestMapping( "/changeVerification")
     public RedirectView  change2FA(@RequestParam("2FA") boolean verification, Model model) {
@@ -169,7 +173,7 @@ public class AppController {
             model.addAttribute("message", "2FA has been enable.");
         else
             model.addAttribute("message", "2FA has been disable.");
-        return new RedirectView("settings");
+        return new RedirectView("security");
     }
 
 
@@ -210,6 +214,11 @@ public class AppController {
             new SecurityContextLogoutHandler().logout(request, null, null);
         return "update_success";
         }
+    }
+
+    @GetMapping("/preference")
+    public String preference(Model model) {
+        return "preference";
     }
 
     @GetMapping("/forgot_password")

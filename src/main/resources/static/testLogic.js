@@ -102,11 +102,20 @@ function connect() {
 
             // Enable the "Send" button
             $("#send").prop("disabled", false);
+
+            //Scroll to the bottom
+            setTimeout(function(){
+                let m = document.querySelector('.message');
+                m.scrollTop =  m.scrollHeight;
+            }, 500);
         } else {
             console.log("Could not connect: already connected");
         }
     });
-}
+
+}// Run connect() when js is loaded
+window.onload = connect;
+
 function disconnect() {
     if (stompClient !== null && open) {
         stompClient.disconnect();
@@ -190,10 +199,3 @@ $(function () {
     $("#disconnect").click(disconnect);
     $("#send").click(send);
 });
-
-
-//Hide "Connect to Chat Room" button and display chat messages
-function displaychat() {
-    document.getElementById("chat").style.visibility = "visible";
-    document.getElementById("connect").style.display = "none";
-}

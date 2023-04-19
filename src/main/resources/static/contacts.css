@@ -1,0 +1,21 @@
+.contacts{
+    background-color: #2b2d31;
+}
+
+.user-table{
+    color: white;
+    border: 1px solid #495057;
+    background: #2b2d31;
+    text-align: center;
+    width: 100%;
+    border-collapse: collapse;
+
+}
+.user-table th{
+    background: #495057;
+    padding: 5px 0;
+}
+
+.user-table td{
+    padding: 5px 0;
+}

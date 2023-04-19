@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/main.css">
+    <link rel="stylesheet" href="../static/settings.css">
+</head>
+<body>
+<div style="display: flex;">
+    <div class="nav">
+        <a th:href="@{/}">
+            <i class="fa fa-comments-o brand"></i>
+        </a>
+        <nav class="nav flex-column justify-content-center">
+            <a th:href="@{/chat_index}">
+                <i class="fa fa-comment-o item"></i>
+            </a>
+            <a th:href="@{/contacts}">
+                <i class="fa fa-address-book-o item"></i>
+            </a>
+            <a th:href="@{/profile}">
+                <i class="fa fa-cog item" style="color: #2fa4e7;"></i>
+            </a>
+        </nav>
+        <a th:href="@{/logout}">
+            <i class="fa fa-sign-out sign_out"></i>
+        </a>
+    </div>
+    <main class="main settings">
+        <nav class="nav-setting justify-content-center">
+            <a th:href="@{/profile}" class="highlight">Profile</a>
+            <a th:href="@{/security}">Security</a>
+            <a th:href="@{/preference}">Preference</a>
+        </nav>
+        <div class="section mt-3">
+            <h3>Account Info</h3>
+            <div class = "section-body ">
+                <span>Account ID: </span>[[${id}]]<br>
+                <span> Creation Date: </span>[[${createdAt}]]
+            </div>
+        </div>
+        <div class="section mt-3">
+            <h3>Username</h3>
+            <div class = "section-body ">
+                <span>[[${username}]]</span>
+                <form th:action="@{/changeUsername}" method="post">
+                    <div class="input-group chat-input">
+                        <label for="username"></label>
+                        <input type="text" id="username" name="username" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Username">
+                        <button class="btn btn-primary" type="submit">Change</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="section mt-3">
+            <h3>Email</h3>
+            <div class = "section-body">
+                <span>[[${email}]]</span>
+                <form th:action="@{/changeEmail}" method="post">
+                    <div class="input-group chat-input">
+                        <label for="email"></label>
+                        <input type="text" id="email" name="email" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Email">
+                        <button class="btn btn-primary" type="submit">Change</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
