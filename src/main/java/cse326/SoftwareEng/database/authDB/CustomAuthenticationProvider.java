@@ -18,7 +18,7 @@ import java.util.Date;
 import java.util.Random;
 public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository userRepo;
     @Autowired
     private EmailService emailService;
 
@@ -26,7 +26,7 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
             throws AuthenticationException {
         super.additionalAuthenticationChecks(userDetails, authentication);
 
-        User user = userRepository.findByUsername(userDetails.getUsername());
+        User user = userRepo.findByUsername(userDetails.getUsername());
         if(user.getVerification()){
             //System.out.println("[2FA] "+ user.getUsername()+ " | "+ user.getCode_timestamp()+ " | "+user.getVerificationCode());
             Date date = new Date();
@@ -41,7 +41,8 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
                 int code = rand.nextInt(1000000);
                 user.setCode_timestamp(timestamp);
                 user.setVerificationCode(code);
-                emailService.sendCode(user, code);
+                userRepo.save(user);
+                emailService.sendCode(user);
                 throw new InsufficientAuthenticationException("Verification is required");
             }
             else{

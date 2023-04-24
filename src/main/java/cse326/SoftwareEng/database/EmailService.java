@@ -31,12 +31,19 @@ public class EmailService {
         }
     }
 
-    public void sendCode(User user, int code){
+    public void sendCode(User user){
         String text = "<p>Hello " + user.getUsername() + ",</p>"
                 + "<p>Your verification code is"
-                + "<p><b>" + code + "</b></p>"
-                + "<br>"
+                + "<p><b>" + user.getVerificationCode() + "</b></p>"
                 + "<p>Note: this verification code is set to expire in 5 minutes.</p>";
             sendMail(user.getEmail(), "Chat Verification Code", text);
+    }//Todo: modify to remove code parameter
+
+    public void sendRest(User user, String URL){
+        String text = "<p>Hello " + user.getUsername() + ",</p>"
+                + "<p>Your password reset link is"
+                + "<p><b>" + URL + "/reset_password?email=" + user.getEmail() + "&code=" + user.getVerificationCode() + "</b></p>"
+                + "<p>Note: this verification code is set to expire in 5 minutes.</p>";
+        sendMail(user.getEmail(), "Chat Verification Code", text);
     }
 }

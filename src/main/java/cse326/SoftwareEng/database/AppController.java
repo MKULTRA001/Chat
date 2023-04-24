@@ -4,21 +4,20 @@ import cse326.SoftwareEng.backEnd.HelloController;
 import cse326.SoftwareEng.database.messageDB.*;
 import cse326.SoftwareEng.database.userDB.User;
 import cse326.SoftwareEng.database.userDB.UserRepository;
-import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.repository.query.Param;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -40,50 +39,83 @@ public class AppController {
         this.userChannelRepository = userChannelRepository;
     }
 
+    @Autowired
+    private EmailService emailService;
+
+    private Authentication getAuth(){
+        return SecurityContextHolder.getContext().getAuthentication();
+    }
+
+    public class Utility {
+        public static String getSiteURL(HttpServletRequest request) {
+            String siteURL = request.getRequestURL().toString();
+            return siteURL.replace(request.getServletPath(), "");
+        }
+    }
+
     @RequestMapping("/")
     public String viewHomePage() {
         return "index";
     }
 
-    @RequestMapping("/register")
-    public String showRegistrationForm(Model model) {
-        model.addAttribute("user", new User());
-        return "signup_form";
+    @GetMapping("/signup")
+    public String showRegistration(Model model) {
+        //model.addAttribute("user", new User());
+        if (!model.containsAttribute("user"))
+            model.addAttribute("user", new User());
+        return "signup";
     }
 
-    @RequestMapping("/process_register")
-    public String processRegister(User user) {
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
-        Date javaDate = new Date();
-        user.setCreatedAt(new Timestamp(javaDate.getTime()));
-        user.setUpdated_at(new Timestamp(javaDate.getTime()));
-        user.setVerificationCode(-1);
-        user.setCode_timestamp(new Timestamp(javaDate.getTime()));
-        userRepo.save(user);
-        UserMessageDB userMessageDB = new UserMessageDB(user.getUsername());
-        userRepositoryMessageDB.save(userMessageDB);
-        UserChannel userChannel = new UserChannel(userMessageDB.getId(), "c17d1a10-c9db-443b-81aa-40d5156b9357");
-        userChannelRepository.save(userChannel);
-        return "register_success";
+    @PostMapping("/signup")
+    public String processRegister(User user, @RequestParam("confirm_password") String confirm_password,
+                                  BindingResult result, RedirectAttributes redirectAttributes) {
+        if(userRepo.findByUsername(user.getUsername()) != null)
+            redirectAttributes.addFlashAttribute("error", "Username already taken.");
+        else if(userRepo.findByEmail(user.getEmail()) != null)
+            redirectAttributes.addFlashAttribute("error", "Email already in use.");
+        else if(!user.getPassword().equals(confirm_password))
+            redirectAttributes.addFlashAttribute("error", "Password does not match.");
+        else{
+            System.out.println("[Signup] Pass");
+            redirectAttributes.addFlashAttribute("message", "Account has successfully been created.");
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            String encodedPassword = passwordEncoder.encode(user.getPassword());
+            user.setPassword(encodedPassword);
+            Date javaDate = new Date();
+            user.setCreatedAt(new Timestamp(javaDate.getTime()));
+            user.setUpdated_at(new Timestamp(javaDate.getTime()));
+            user.setVerificationCode(-1);
+            user.setCode_timestamp(new Timestamp(javaDate.getTime()));
+            userRepo.save(user);
+            UserMessageDB userMessageDB = new UserMessageDB(user.getUsername());
+            userRepositoryMessageDB.save(userMessageDB);
+            UserChannel userChannel = new UserChannel(userMessageDB.getId(), "c17d1a10-c9db-443b-81aa-40d5156b9357");
+            userChannelRepository.save(userChannel);
+            return "redirect:/login";
+        }
+        redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.createAccountModel", result);
+        redirectAttributes.addFlashAttribute("user", user);
+        return "redirect:/signup";
     }
     @RequestMapping("/deleteAccount")
-    public String deleteAccount(HttpServletRequest request){
-        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+    public String deleteAccount(HttpServletRequest request, RedirectAttributes redirectAttributes){
+        String userName = getAuth().getName();
         userRepo.deleteByUsername(userName);
-       if(messageRepository.existsByUserId(userName)) {
+       if(messageRepository.existsByUserId(userName))
            messageRepository.deleteUser(userName);
-       }
         userRepositoryMessageDB.deleteByUsername(userName);
         SecurityContextHolder.clearContext();
         new SecurityContextLogoutHandler().logout(request, null, null);
-        return "deleted_success";
+        redirectAttributes.addFlashAttribute("message", "Account has been deleted.");
+        return "redirect:/signup";
     }
 
     @RequestMapping("/login")
-    public String userLogin() {
-        return "login";
+    public String login() {
+        if (getAuth() == null || AnonymousAuthenticationToken.class.
+                isAssignableFrom(getAuth().getClass()))
+            return "login";
+        return "redirect:/chat_index";
     }
 
     @RequestMapping("/contacts")
@@ -94,102 +126,91 @@ public class AppController {
     }
 
     @GetMapping("/profile")
-    public String profile(Model model) {
-        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
-        model.addAttribute("id", user.getId());
-        model.addAttribute("createdAt", user.getCreatedAt());
-        model.addAttribute("username", user.getUsername());
+    public String profile() {
         return "profile";
     }
 
-    @RequestMapping( "/changeUsername")
-    public RedirectView  changeUsername(@RequestParam("username") String username, Authentication authentication, Model model) {
+    @PostMapping( "/changeUsername")
+    public String changeUsername(@RequestParam("username") String username, Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
         if(userRepo.findByUsername(username) == null){
-            User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+            User user = userRepo.findByUsername(getAuth().getName());
             //user.setUsername(username);
-            model.addAttribute("message", "Username has been change.");
+            //userRepo.save(user);
+            redirectAttributes.addFlashAttribute("message", "Username has been change.");
             System.out.println("[Username]"+username);
         }
         else
-            model.addAttribute("error", "Username is already taken.");
-        return new RedirectView("profile");
+            redirectAttributes.addFlashAttribute("error", "Username is already taken.");
+        return "redirect:/profile";
     }
 
-    @RequestMapping( "/changeEmail")
-    public RedirectView  changeEmail(@RequestParam("email") String email,Authentication authentication,  Model model) {
+    @PostMapping( "/changeEmail")
+    public String  changeEmail(@RequestParam("email") String email,Authentication authentication,  Model model, RedirectAttributes redirectAttributes) {
         if(userRepo.findByEmail(email) == null){
-            /*TODO Check if email format is correct*/
-            User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+            User user = userRepo.findByUsername(getAuth().getName());
             //user.setEmail(email);
-            model.addAttribute("message", "Email has been change.");
+            //userRepo.save(user);
+            redirectAttributes.addFlashAttribute("message", "Email has been change.");
             System.out.println("Email has been change.");
         }
         else
-            model.addAttribute("error", "Email is already in use.");
-        return new RedirectView("profile");
+            redirectAttributes.addFlashAttribute("error", "Email is already in use.");
+        return "redirect:/profile";
     }
 
     @GetMapping("/security")
-    public String security(Model model) {
-        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
-        model.addAttribute("verification", user.getVerification());
+    public String security() {
         return "security";
     }
 
-    @RequestMapping( "/changePassword")
-    public RedirectView  changePassword(@RequestParam("currentPassword") String currentPassword,
+    @PostMapping( "/changePassword")
+    public String  changePassword(@RequestParam("currentPassword") String currentPassword,
                                         @RequestParam("newPassword") String newPassword,
                                         @RequestParam("confirmPassword") String confirmPassword,
-                                        Model model, HttpServletRequest request) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                                        Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        Authentication auth = getAuth();
         User user = userRepo.findByUsername(auth.getName());
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         System.out.print("[Password]: " + confirmPassword);
         if(!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            model.addAttribute("error", "The current password is incorrect.");
+            redirectAttributes.addFlashAttribute("error", "The current password is incorrect.");
         }
         else if (!newPassword.equals(confirmPassword)) {
-            model.addAttribute("error", "The new password and confirm password do not match.");
+            redirectAttributes.addFlashAttribute("error", "The new password and confirm password do not match.");
         }
         else if(passwordEncoder.matches(newPassword, user.getPassword())) {
-            model.addAttribute("error", "The new password cannot be the same as the current password.");
+            redirectAttributes.addFlashAttribute("error", "The new password cannot be the same as the current password.");
         }
         else {
+            redirectAttributes.addFlashAttribute("success", "Your password has been updated successfully.");
             /*user.setPassword(passwordEncoder.encode(newPassword));
             Date javaDate = new Date();
             user.setUpdated_at(new Timestamp(javaDate.getTime()));
             userRepo.save(user);
-            model.addAttribute("success", "Your password has been updated successfully.");
-            SecurityContextHolder.clearContext();
-            new SecurityContextLogoutHandler().logout(request, null, null);*/
+            SecurityContextHolder.clearContext();*/
         }
-        return new RedirectView("security");
+        return "redirect:/security";
     }
-    @RequestMapping( "/changeVerification")
-    public RedirectView  change2FA(@RequestParam("2FA") boolean verification, Model model) {
-        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+    @PostMapping( "/changeVerification")
+    public String change2FA(@RequestParam("2FA") boolean verification, Model model, RedirectAttributes redirectAttributes) {
+        User user = userRepo.findByUsername(getAuth().getName());
         //user.setVerification(verification);
         System.out.println("[2FA]" + verification);
         if(verification)
-            model.addAttribute("message", "2FA has been enable.");
+            redirectAttributes.addFlashAttribute("message", "2FA has been enable.");
         else
-            model.addAttribute("message", "2FA has been disable.");
-        return new RedirectView("security");
+            redirectAttributes.addFlashAttribute("message", "2FA has been disable.");
+        return "redirect:/security";
     }
-
-
-    @RequestMapping("/ChangePassword")
-    public String ChangePassword() {
-        return "ChangePassword";
-    }
+    /*
     @RequestMapping("/updatePassword")
     public String updatePassword(@RequestParam("currentPassword") String currentPassword,
                                  @RequestParam("newPassword") String newPassword,
                                  @RequestParam("confirmPassword") String confirmPassword,
                                  Model model, HttpServletRequest request) {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth = getAuth();
         User user = userRepo.findByUsername(auth.getName());
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -216,16 +237,16 @@ public class AppController {
             new SecurityContextLogoutHandler().logout(request, null, null);
         return "update_success";
         }
-    }
+    }*/
 
     @GetMapping("/preference")
-    public String preference(Model model) {
+    public String preference() {
         return "preference";
     }
 
     @GetMapping("/forgot_password")
     public String showForgotPasswordForm() {
-        return "forgot_password_form";
+        return "forgot_password";
     }
 
     @PostMapping("/forgot_password")
@@ -233,89 +254,63 @@ public class AppController {
         String email = request.getParameter("email");
         System.out.println("[Forgot] email:"+email);
         User user = userRepo.findByEmail(email);
-        if (user == null) {
-            model.addAttribute("error", "Bad Email");
-        }
+        if (user == null)
+            model.addAttribute("error", "Email not found");
         else{
             Random rand = new Random();
             int code = rand.nextInt(1000000);
-            Date date = new Date();
-            Timestamp timestamp = new Timestamp(date.getTime());
+            Timestamp timestamp = new Timestamp(new Date().getTime());
             user.setCode_timestamp(timestamp);
             user.setVerificationCode(code);
-            String message = Utility.getSiteURL(request) + "/reset_password?email=" + email + "&code=" + code;
-            sendMail(email, "subject", message);
-            model.addAttribute("message", "A reset password link has been sent to your email. Please check.");
-            System.out.println("Reset Email sent");
+            userRepo.save(user);
+            emailService.sendRest(user, Utility.getSiteURL(request));
+            model.addAttribute("message", "Check your email for a reset link.");
         }
-        return "forgot_password_form";
+        return "forgot_password";
     }
 
-    @GetMapping("/reset_password")
-    public String showResetPasswordForm(@Param(value = "email") String email, @Param(value = "code") String code, Model model) {
+     @GetMapping("/reset_password")
+    public String showResetPasswordForm(@Param(value = "email") String email, @Param(value = "code") String code,
+                                        HttpServletRequest request, Model model, RedirectAttributes redirectAttributes) {
         User user = userRepo.findByEmail(email);
         model.addAttribute("email", email);
         model.addAttribute("code", code);
-
-        if (user == null || user.getVerificationCode() != Integer.parseInt(code)) {
-            model.addAttribute("message", "Invalid email or code");
-            model.addAttribute("title", "Reset your password");
-            System.out.println("[Reset Checking] 1st "+code);
-            return "message";
-        }
-
-        return "reset_password_form";
-    }
-
-    @PostMapping("/reset_password")
-    public String processResetPassword(HttpServletRequest request, Model model) {
-        String email = request.getParameter("email");
-        String code = request.getParameter("code");
-        String password = request.getParameter("password");
-
-        User user = userRepo.findByEmail(email);
-        model.addAttribute("title", "Reset your password");
-
         Date date = new Date();
         Timestamp timestamp = new Timestamp(date.getTime());
+        System.out.println("Get "+email);
+            if (user == null
+                    || Integer.parseInt(code) != user.getVerificationCode()
+                    || timestamp.after(new Timestamp(user.getCode_timestamp().getTime()+ (300 * 1000L)))) {
+             redirectAttributes.addFlashAttribute("error", "Invalid link. Request password reset again.");
+             return "redirect:/forgot_password";
+            }
+        return "reset_password";
+     }
 
+    @PostMapping("/reset_password")
+    public String processResetPassword(@Param(value = "email") String email, @Param(value = "code") String code,
+                                       @RequestParam("password") String password, @RequestParam("confirm_password") String confirm_password,
+                                       HttpServletRequest request, Model model, RedirectAttributes redirectAttributes) {
+        User user = userRepo.findByEmail(email);
+        Date date = new Date();
+        Timestamp timestamp = new Timestamp(date.getTime());
         if (user == null
                 || Integer.parseInt(code) != user.getVerificationCode()
                 || timestamp.after(new Timestamp(user.getCode_timestamp().getTime()+ (300 * 1000L)))) {
-            model.addAttribute("message", "Invalid Requets");
-            System.out.println("[reset_password] Invalid");
+            model.addAttribute("error", "Invalid request. Request password reset again.");
+            return "redirect:/forgot_password";
         }
-        else {
-            user.setPassword(password);
-            System.out.println("[reset_password] Password set");
-
-            model.addAttribute("message", "You have successfully changed your password.");
+        if(!password.equals(confirm_password)){
+            redirectAttributes.addFlashAttribute("error", "Password does not match");
+            redirectAttributes.addAttribute("email", email);
+            redirectAttributes.addAttribute("code", code);
+            return "redirect:/reset_password";
         }
-        return "message";
+        Date javaDate = new Date();
+        user.setUpdated_at(new Timestamp(javaDate.getTime()));
+        user.setPassword(new BCryptPasswordEncoder().encode(password));
+        userRepo.save(user);
+        redirectAttributes.addFlashAttribute("message", "Password was successfully reset.");
+        return "redirect:/login";
     }
-    public class Utility {
-        public static String getSiteURL(HttpServletRequest request) {
-            String siteURL = request.getRequestURL().toString();
-            return siteURL.replace(request.getServletPath(), "");
-        }
-    }
-    @Autowired
-    private JavaMailSender javaMailSender;
-
-    public void sendMail(String to, String subject, String text) {
-        try{
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("chat@cs.nmt.edu");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(text, true);
-            javaMailSender.send(message);
-        }
-        catch (Exception e) {
-            System.out.println("[EmailService] Error while Sending Mail to "+to+" "+e);
-        }
-    }
-
-
 }

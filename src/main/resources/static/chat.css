@@ -10,9 +10,10 @@
 }
 
 .message{
-    padding: 1rem;
+    padding: 0.5rem 1rem;
     display: flex;
     overflow-y: auto;
+    height: 100vh;
 }
 
 table {
@@ -38,5 +39,30 @@ table {
 }
 
 .chat-input{
-    padding: 10px 20px;
+    padding: 1rem;
+}
+
+.message-input{
+    color: white;
+    background: #2d2d2d;
+    border: #2d2d2d;
+    border-top-left-radius: .25rem !important;
+    border-bottom-left-radius: .25rem !important;
+}
+
+.message-input:focus{
+    color: white;
+    background: #2d2d2d;
+}
+
+.message-btn {
+    color: white;
+    background: #2fa4e7;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.message-btn:hover {
+    color: white;
+    background: #1476ae;
 }
