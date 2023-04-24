@@ -1,21 +1,18 @@
 package cse326.SoftwareEng.backEnd;
 
-import cse326.SoftwareEng.database.messageDB.Message;
-import cse326.SoftwareEng.database.messageDB.MessageRepository;
-import cse326.SoftwareEng.database.messageDB.UserMessageDB;
-import cse326.SoftwareEng.database.messageDB.UserRepositoryMessageDB;
+import cse326.SoftwareEng.database.messageDB.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Date;
-import java.util.List;
+
+import java.util.*;
 
 /**
  * Test controller
@@ -26,10 +23,18 @@ import java.util.List;
 public class HelloController{
     private final UserRepositoryMessageDB userRepositoryMessageDB;
     private final MessageRepository messageRepository;
-    public HelloController(UserRepositoryMessageDB userRepositoryMessageDB, MessageRepository messageRepository) {
+    private final ChannelRepository channelRepository;
+    private final UserChannelRepository userChannelRepository;
+    public HelloController(UserRepositoryMessageDB userRepositoryMessageDB,
+                           MessageRepository messageRepository,
+                           ChannelRepository channelRepository,
+                           UserChannelRepository userChannelRepository) {
         this.userRepositoryMessageDB = userRepositoryMessageDB;
         this.messageRepository = messageRepository;
+        this.channelRepository = channelRepository;
+        this.userChannelRepository = userChannelRepository;
     }
+
     private String convertMessagesToJson(List<Message> messages) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -48,16 +53,21 @@ public class HelloController{
      * @param message incoming message
      * @return response to payload
      */
-    @MessageMapping("/chat")
-    @SendTo("/chat/hello")
-    public TextMessage helloWorld(TextMessage message){
+    @MessageMapping("/chat/{channelId}")
+    @SendTo("/chat/message/{channelId}")
+    public TextMessage helloWorld(@DestinationVariable String channelId, TextMessage message){
         String username = message.getMessage().split(":")[0];
         UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
+        UserChannel userChannel = userChannelRepository.findByUserIdAndChannelId(user.getId(), channelId);
+        if (userChannel == null || message.getChannel() == null) {
+            return null; // Do not send the message if the user is not in the channel or the channel field is null
+        }
         Date date = new Date();
-        Message dbMessage = new Message(message.getMessage(), date, user);
+        Message dbMessage = new Message(message.getMessage(), date, user, message.getChannel());
         messageRepository.save(dbMessage);
         String messageId = dbMessage.getMessage_id();
-        TextMessage message1 = new TextMessage(message.getMessage(),username, date.toString(), messageId);
+        String channel = message.getChannel();
+        TextMessage message1 = new TextMessage(message.getMessage(),username, date.toString(), messageId, channel);
         System.out.println(message1);
         return message1;
     }
@@ -69,20 +79,35 @@ public class HelloController{
      * @param message incoming message (in this it should be a name)
      * @return response to payload
      */
-    @MessageMapping("/name")
-    @SendTo("/chat/login")
-    public TextMessage login(TextMessage message) {
-        String username = message.getMessage();
+    @MessageMapping("/name/{channelId}")
+    @SendTo("/chat/login/{channelId}")
+    public TextMessage login(@DestinationVariable String channelId, TextMessage message) {
+        String[] messageParts = message.getMessage().split(":", 2);
+        String username = messageParts[0];
+        System.out.println("Message in login: " + message.getMessage());
         UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
-        StringBuilder response = new StringBuilder("Welcome back, " + username + "! Your old messages are:\n");
+        System.out.println("userID: " + user.getId() + " ChannelID: " + channelId);
+        UserChannel userChannel = userChannelRepository.findByUserIdAndChannelId(user.getId(), channelId);
+        System.out.println("UserChannel: " + userChannel + " Channel: " + channelId);
+        if (userChannel == null) {
+            System.out.println("User " + username + " is not in channel " + channelId);
+            return null;
+        }
+        StringBuilder response = new StringBuilder("Welcome back, " + username + "! This channel's old messages are:\n");
         // Fetch old messages using the new method in MessageRepository
-        List<String> oldMessages = messageRepository.findAllMessagesByUsername(username);
-        for (String oldMessage : oldMessages) {
-            response.append(oldMessage).append("\n");
+        List<Message> oldMessages = messageRepository.findAllMessagesByChannelIdSortedByTimeDesc(channelId);
+        for (Message oldMessage : oldMessages) {
+            String[] messageContentParts = oldMessage.getMessage().split(":", 2);
+            String messageContent = messageContentParts.length > 1 ? messageContentParts[1].trim() : "";
+            response.append(oldMessage.getUser().getUsername())
+                    .append(": ")
+                    .append(messageContent)
+                    .append("\n");
         }
         System.out.println(response.toString());
-        return new TextMessage(response.toString());
+        return new TextMessage(username + ":" + response.toString());
     }
+
     @RequestMapping("/chat_index")
     public String TestIndex(){
         return "chat_index";
@@ -104,5 +129,54 @@ public class HelloController{
     @SendTo({"/chat/private/{user1}"})
     public TextMessage directMessage(@DestinationVariable String user1, TextMessage message){
         return new TextMessage(message.getMessage());
+    }
+    @PostMapping("/createChannel")
+    public ResponseEntity<Map<String, String>> createChannel(@RequestBody Map<String, Object> payload) {
+        String currentUser = currentUserName();
+        String inviteLink = UUID.randomUUID().toString(); // Generate a unique invite link
+        String channelName = (String) payload.get("channelName");
+        List<String> userList = (List<String>) payload.get("userList");
+        Channel channel = new Channel(channelName, currentUser, inviteLink);
+        UserMessageDB cUser = userRepositoryMessageDB.findByUsername(currentUser);
+        UserChannel userChannel = new UserChannel(cUser.getId(), channel.getChannel_id());
+        channelRepository.save(channel);
+        userChannelRepository.save(userChannel);
+        for (String username : userList) {
+            UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
+            if (user != null) {
+                UserChannel userChannel1 = new UserChannel(user.getId(), channel.getChannel_id());
+                userChannelRepository.save(userChannel1);
+            }
+        }
+        Map<String, String> response = new HashMap<>();
+        response.put("inviteLink", inviteLink);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PostMapping("/joinChannel")
+    public ResponseEntity<String> joinChannel(@RequestParam String inviteLink) {
+        Channel channel = channelRepository.findByInviteLink(inviteLink);
+        if (channel == null) {
+            return new ResponseEntity<>("Invalid invite link.", HttpStatus.BAD_REQUEST);
+        }
+        String currentUser = currentUserName();
+        System.out.println(currentUser);
+        UserMessageDB user = userRepositoryMessageDB.findByUsername(currentUser);
+        UserChannel userChannel = new UserChannel(user.getId(), channel.getChannel_id());
+        userChannelRepository.save(userChannel);
+        return new ResponseEntity<>("Joined channel successfully.", HttpStatus.OK);
+    }
+
+    @GetMapping("/getChannels")
+    @ResponseBody
+    public List<Channel> getChannels() {
+        String currentUser = currentUserName();
+        UserMessageDB user = userRepositoryMessageDB.findByUsername(currentUser);
+        return userChannelRepository.findChannelsByUserId(user.getId());
+    }
+
+
+    @GetMapping("/getChannelUsers/{channelId}")
+    public List<UserMessageDB> getChannelUsers(@PathVariable String channelId) {
+        return userChannelRepository.findUsersByChannelId(channelId);
     }
 }

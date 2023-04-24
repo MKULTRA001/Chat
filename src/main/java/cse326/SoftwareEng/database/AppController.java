@@ -1,9 +1,7 @@
 package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
-import cse326.SoftwareEng.database.messageDB.MessageRepository;
-import cse326.SoftwareEng.database.messageDB.UserMessageDB;
-import cse326.SoftwareEng.database.messageDB.UserRepositoryMessageDB;
+import cse326.SoftwareEng.database.messageDB.*;
 import cse326.SoftwareEng.database.userDB.User;
 import cse326.SoftwareEng.database.userDB.UserRepository;
 import jakarta.mail.internet.MimeMessage;
@@ -34,10 +32,12 @@ public class AppController {
     private final UserRepository userRepo;
     private final UserRepositoryMessageDB userRepositoryMessageDB;
     private final MessageRepository messageRepository;
-    public AppController(UserRepository userRepo, UserRepositoryMessageDB userRepositoryMessageDB, MessageRepository messageRepository) {
+    private final UserChannelRepository userChannelRepository;
+    public AppController(UserRepository userRepo, UserRepositoryMessageDB userRepositoryMessageDB, MessageRepository messageRepository, UserChannelRepository userChannelRepository) {
         this.userRepo = userRepo;
         this.userRepositoryMessageDB = userRepositoryMessageDB;
         this.messageRepository = messageRepository;
+        this.userChannelRepository = userChannelRepository;
     }
 
     @RequestMapping("/")
@@ -64,6 +64,8 @@ public class AppController {
         userRepo.save(user);
         UserMessageDB userMessageDB = new UserMessageDB(user.getUsername());
         userRepositoryMessageDB.save(userMessageDB);
+        UserChannel userChannel = new UserChannel(userMessageDB.getId(), "c17d1a10-c9db-443b-81aa-40d5156b9357");
+        userChannelRepository.save(userChannel);
         return "register_success";
     }
     @RequestMapping("/deleteAccount")

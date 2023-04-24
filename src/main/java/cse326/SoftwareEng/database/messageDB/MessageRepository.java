@@ -59,5 +59,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query("SELECT m FROM Message m ORDER BY m.sendTime DESC ")
     List<Message> findAllByOrderByTimeDesc();
 
+    @Query("SELECT m FROM Message m WHERE m.user.user_id = ?1 AND m.channel.channel_id = ?2")
+    List<Message> findAllMessagesByUserIdAndChannelId(String user_id, String channel_id);
+    @Query("SELECT m FROM Message m WHERE m.channel.channel_id = ?1 ORDER BY m.sendTime DESC")
+    List<Message> findAllMessagesByChannelIdSortedByTimeDesc(String channel_id);
 
 }

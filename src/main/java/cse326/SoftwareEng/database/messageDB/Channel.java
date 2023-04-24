@@ -63,4 +63,13 @@ public class Channel {
     public void setInvite_link(String invite_link) {
         this.invite_link = invite_link;
     }
+    @Override
+    public String toString() {
+        return "Channel{" +
+                "channel_id='" + channel_id + '\'' +
+                ", channel_name='" + channel_name + '\'' +
+                ", created_by='" + created_by + '\'' +
+                ", invite_link='" + invite_link + '\'' +
+                '}';
+    }
 }

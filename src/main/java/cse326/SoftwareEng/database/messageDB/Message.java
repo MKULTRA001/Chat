@@ -28,13 +28,20 @@ public class Message {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private UserMessageDB user;
+    @Column(name = "channel_id")
+    private String channel_id;
+
+    @ManyToOne
+    @JoinColumn(name = "channel_id", insertable = false, updatable = false)
+    private Channel channel;
 
     /*Constructor for Message class where message_id, message, sendTime, and user are instantiated respectively*/
-    public Message(String message, Date sendTime, UserMessageDB user) {
+    public Message(String message, Date sendTime, UserMessageDB user, String channel_id) {
         this.message_id = UUID.randomUUID().toString();
         this.message = message;
         this.sendTime = sendTime;
         this.user = user;
+        this.channel_id = channel_id;
     }
     /*Default constructor for Message class*/
     public Message() {
@@ -77,7 +84,21 @@ public class Message {
     public void setUser(UserMessageDB user) {
         this.user = user;
     }
+    public String getChannel_id() {
+        return channel_id;
+    }
 
+    public void setChannel_id(String channel_id) {
+        this.channel_id = channel_id;
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
+    }
     @Override
     public String toString() {
         return "Message{" +
@@ -85,6 +106,7 @@ public class Message {
                 ", message='" + message + '\'' +
                 ", sendTime=" + sendTime +
                 ", user=" + user.getUsername() +
+                ", channel_id='" + channel_id + '\'' +
                 '}';
     }
 }
