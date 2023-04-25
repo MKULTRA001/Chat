@@ -49,7 +49,7 @@ function displayOldMessages(message, uname) {
                 // the message is appended to the chat window using the appendMessage function with the color
                 // of the sender's name being green and the color of the recipient's name being red.
                 if (response.recipient === uname || !response.recipient) {
-                    appendMessage(oldMessage, uname === msgArray[0] ? 'green' : 'red');
+                    appendMessage(oldMessage, uname === msgArray[0] ? '#2fa4e7' : 'white');
                 }
             }
         }
@@ -106,8 +106,8 @@ async function connect() {
         $("#send").prop("disabled", false);
         // The chat window is scrolled to the bottom after a short delay.
         setTimeout(function(){
-            let m = document.querySelector('.message');
-            m.scrollTop =  m.scrollHeight;
+            let m = document.querySelector('.chat-body');
+            m.scrollTop =  1000;//m.scrollHeight;
         }, 500);
     } else {
         // If the WebSocket connection is already open, a message is logged to the console.
