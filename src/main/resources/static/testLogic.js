@@ -159,6 +159,7 @@ function send(message) {
                 const destination = `/app/chat/${currentChannelId}`;
                 // A message is sent to the channel with the sender's name and the message text.
                 stompClient.send(destination, {}, JSON.stringify({'message': `${uname}: ${value}`, 'channel': currentChannelId}));
+                document.getElementById("input").value = "";
             } else {
                 console.log("No channel selected");
             }
@@ -280,22 +281,30 @@ function clearChatWindow() {
 function renderChannels(channels) {
     const channelList = document.getElementById("userChannels");
     channelList.innerHTML = "";
-
     // For each channel in the channels array, a button element is created and added to the channelList element.
-    channels.forEach(channel => {
+    channels.forEach((channel) => {
         const li = document.createElement("li");
         const button = document.createElement("button");
         button.textContent = channel.channel_name;
         button.setAttribute("data-channel-id", channel.channel_id);
         button.classList.add("channel-button"); // Add a class for styling
-        // When the button is clicked, the user subscribes to the corresponding channel.
-        button.addEventListener("click", () => {
-            subscribeToChannel(channel.channel_id);
-        });
+        button.onclick = async () => {
+            // Remove the 'selected' class from all channel buttons
+            const allChannelButtons = document.getElementsByClassName("channel-button");
+            Array.from(allChannelButtons).forEach((btn) => btn.classList.remove("selected"));
+
+            // Add the 'selected' class to the clicked channel button
+            button.classList.add("selected");
+
+            // Subscribe to the corresponding channel
+            const channelId = button.getAttribute("data-channel-id");
+            await subscribeToChannel(channelId);
+        };
         li.appendChild(button);
         channelList.appendChild(li);
     });
 }
+
 
 // This async function fetches the list of channels from the server and renders them in the userChannels element.
 async function fetchChannels() {
@@ -353,4 +362,7 @@ $(function () {
         }
     });
 
+});
+document.addEventListener('DOMContentLoaded', async () => {
+    await fetchChannels();
 });
