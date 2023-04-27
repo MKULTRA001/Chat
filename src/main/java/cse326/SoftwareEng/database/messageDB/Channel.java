@@ -20,11 +20,14 @@ public class Channel {
     @Column(name = "invite_link")
     private String invite_link;
 
-    public Channel(String channel_name, String created_by, String invite_link) {
+    @Column(name = "privateChannel")
+    private boolean privateChannel;
+    public Channel(String channel_name, String created_by, String invite_link, Boolean privateChannel) {
         this.channel_id = UUID.randomUUID().toString();
         this.channel_name = channel_name;
         this.created_by = created_by;
         this.invite_link = invite_link;
+        this.privateChannel = privateChannel;
     }
 
     public Channel() {
@@ -71,5 +74,13 @@ public class Channel {
                 ", created_by='" + created_by + '\'' +
                 ", invite_link='" + invite_link + '\'' +
                 '}';
+    }
+
+    public boolean isPrivateChannel() {
+        return privateChannel;
+    }
+
+    public void setPrivateChannel(boolean privateChannel) {
+        this.privateChannel = privateChannel;
     }
 }

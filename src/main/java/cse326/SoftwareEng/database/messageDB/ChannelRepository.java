@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface ChannelRepository extends JpaRepository<Channel, String> {
     @Query("SELECT c FROM Channel c WHERE c.invite_link = ?1")
     Channel findByInviteLink(String inviteLink);
+    @Query("SELECT c FROM Channel c WHERE c.channel_id = ?1")
+    Channel findByChannelID(String channel_id);
 }

@@ -125,18 +125,45 @@ public class HelloController{
      * @param message incoming message
      * @return response to payload
      */
-    @MessageMapping("/chat/private/{user1}")
-    @SendTo({"/chat/private/{user1}"})
-    public TextMessage directMessage(@DestinationVariable String user1, TextMessage message){
-        return new TextMessage(message.getMessage());
+    @MessageMapping("/chat/private/{user1}/{user2}")
+    @SendTo({"/chat/message/private/{user1}/{user2}"})
+    public TextMessage directMessage(@DestinationVariable String user1, @DestinationVariable String user2, TextMessage message) {
+        System.out.println("Message in directMessage: " + message.getMessage());
+        String username = message.getMessage().split(":")[0];
+        UserMessageDB user = userRepositoryMessageDB.findByUsername(user1);
+
+        if (!username.equals(user1)) {
+            System.out.println("ERROR UEQ");
+            return null; // Do not send the message if the sender is not user1
+        }
+        System.out.println("user1 username: " + user.getUsername());
+        UserMessageDB users2 = userRepositoryMessageDB.findByUsername(user2);
+        System.out.println("user2 username: " + users2.getUsername());
+        Channel privateChannel = userChannelRepository.findPrivateChannelByUsernames(user.getUsername(), users2.getUsername());
+        System.out.println("Private channel: " + privateChannel);
+        if (privateChannel == null) {
+            System.out.println("PVC");
+            return null; // Do not send the message if the private channel does not exist
+        }
+
+        Date date = new Date();
+        Message dbMessage = new Message(message.getMessage(), date, user, privateChannel.getChannel_id());
+        System.out.println("Before saving message: " + dbMessage);
+        messageRepository.save(dbMessage);
+        System.out.println("After saving message: " + dbMessage);
+        String messageId = dbMessage.getMessage_id();
+        TextMessage message1 = new TextMessage(message.getMessage(), user1, date.toString(), messageId, privateChannel.getChannel_id());
+        System.out.println("Message: "+ message1);
+        return (message1);
     }
+
     @PostMapping("/createChannel")
     public ResponseEntity<Map<String, String>> createChannel(@RequestBody Map<String, Object> payload) {
         String currentUser = currentUserName();
         String inviteLink = UUID.randomUUID().toString(); // Generate a unique invite link
         String channelName = (String) payload.get("channelName");
         List<String> userList = (List<String>) payload.get("userList");
-        Channel channel = new Channel(channelName, currentUser, inviteLink);
+        Channel channel = new Channel(channelName, currentUser, inviteLink, Boolean.FALSE);
         UserMessageDB cUser = userRepositoryMessageDB.findByUsername(currentUser);
         UserChannel userChannel = new UserChannel(cUser.getId(), channel.getChannel_id());
         channelRepository.save(channel);
@@ -152,6 +179,33 @@ public class HelloController{
         response.put("inviteLink", inviteLink);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @PostMapping("/createPrivateChannel/{user1}/{user2}")
+    public ResponseEntity<String> createPrivateChannel(@PathVariable String user1, @PathVariable String user2) {
+        String channelName = "DM:" + user1 + " and " + user2;
+        Channel channel = new Channel(channelName, user1, null, Boolean.TRUE);
+        channelRepository.save(channel);
+        UserMessageDB users1 = userRepositoryMessageDB.findByUsername(user1);
+        UserMessageDB users2 = userRepositoryMessageDB.findByUsername(user2);
+        UserChannel userChannel1 = new UserChannel(users1.getId(), channel.getChannel_id());
+        UserChannel userChannel2 = new UserChannel(users2.getId(), channel.getChannel_id());
+        userChannelRepository.save(userChannel1);
+        userChannelRepository.save(userChannel2);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+
+    @GetMapping("/checkPrivateChannel/{channel_ID}")
+    @ResponseBody
+    public boolean checkPrivateChannel(@PathVariable String channel_ID) {
+        System.out.println("checkPrivateChannel Channel ID: " + channel_ID);
+        Channel channel = channelRepository.findByChannelID(channel_ID);
+        if (channel == null) {
+            return false;
+        }
+        System.out.println("checkPrivateChannel Channel: " + channel.isPrivateChannel());
+        return channel.isPrivateChannel();
+    }
+
     @PostMapping("/joinChannel")
     public ResponseEntity<String> joinChannel(@RequestParam String inviteLink) {
         Channel channel = channelRepository.findByInviteLink(inviteLink);
@@ -176,7 +230,11 @@ public class HelloController{
 
 
     @GetMapping("/getChannelUsers/{channelId}")
-    public List<UserMessageDB> getChannelUsers(@PathVariable String channelId) {
-        return userChannelRepository.findUsersByChannelId(channelId);
+    @ResponseBody
+    public List<String> getChannelUsers(@PathVariable String channelId) {
+        List<String> usernames = userChannelRepository.findUsernamesByChannelId(channelId);
+        System.out.println("getChannelUsers: " + usernames);
+        return usernames;
     }
+
 }

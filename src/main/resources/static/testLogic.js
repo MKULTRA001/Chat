@@ -133,39 +133,66 @@ function disconnect() {
 }
 // This function sends a message to the chat server.
 function send(message) {
-    // The user's name is retrieved asynchronously from the server.
-    getUname().then(function (uname) {
-        // The username display in the chat window is updated.
-        $("#username_Update").replaceWith("Username: " + uname);
-        // The value of the message input field is retrieved.
-        const value = $("#input").val();
-        // If the message starts with "/msg", it is treated as a direct message and sent to the specified user.
-        if (value.startsWith('/msg')) {
-            // The target user and the message text are extracted from the message input field.
-            const [, target, ...payload] = value.split(' ');
-            const messageText = payload.join(' ');
-            console.log("Direct Message to: " + target);
-            // A message is sent to the target user with the sender's name and the message text.
-            stompClient.send(`/app/chat/private/${target}`, {}, JSON.stringify({'message': `(${uname} messaged you: ${messageText})`}));
-            // A message is sent to the sender with the recipient's name and the message text.
-            stompClient.send(`/app/chat/private/${uname}`, {}, JSON.stringify({
-                'message': `(you messaged ${
-                    target}: ${messageText})`
+    if (currentChannelId) {
+        // The user's name is retrieved asynchronously from the server.
+        getUname().then(async function (uname) {
+            const response = await fetch(`/checkPrivateChannel/${currentChannelId}`);
+            console.log(response);
+            // The username display in the chat window is updated.
+            $("#username_Update").replaceWith("Username: " + uname);
+            // The value of the message input field is retrieved.
+            const value = $("#input").val();
+            console.log("Value: " + value);
+            if (response.ok) {
+                const isPrivate = await response.json();
+                console.log(isPrivate);
+                if (isPrivate) {
+                    await sendDirectMessage(currentChannelId, value);
+                    document.getElementById("input").value = "";
+                } else {
+                    // If no target user is specified, the message is sent to the current channel.
+                    // The destination is set to the current channel.
+                    const destination = `/app/chat/${currentChannelId}`;
+                    // A message is sent to the channel with the sender's name and the message text.
+                    stompClient.send(destination, {}, JSON.stringify({
+                        'message': `${uname}: ${value}`,
+                        'channel': currentChannelId
+                    }));
+                    document.getElementById("input").value = "";
+                }
+            }
+            else{
+                console.log("No Response");
+            }
+        });
+    }
+    else {
+        console.log("No channel selected");
+    }
+}
+async function sendDirectMessage(currentChannelId, message) {
+    const users = await getChannelUsers(currentChannelId);
+    const uname = await getUname();
+    console.log("Current Channel ID: " + currentChannelId);
+    console.log("Users: " + users);
+    // Check if the list has 2 users
+    if (users.length === 2) {
+        // Find the target user (the one that isn't 'uname')
+        const target = users.find(user => user !== uname);
+        if (target) {
+            const destination = `/app/chat/private/${uname}/${target}`;
+            stompClient.send(destination, {}, JSON.stringify({
+                'message': `${uname}: ${message}`,
+                'channel': currentChannelId
             }));
         } else {
-            // If no target user is specified, the message is sent to the current channel.
-            if (currentChannelId) {
-                // The destination is set to the current channel.
-                const destination = `/app/chat/${currentChannelId}`;
-                // A message is sent to the channel with the sender's name and the message text.
-                stompClient.send(destination, {}, JSON.stringify({'message': `${uname}: ${value}`, 'channel': currentChannelId}));
-                document.getElementById("input").value = "";
-            } else {
-                console.log("No channel selected");
-            }
+            console.error("Error: Target user not found.");
         }
-    });
+    } else {
+        console.error("Error: The channel must have exactly 2 users.");
+    }
 }
+
 
 // A function that sends the current user's username to the server
 function name() {
@@ -205,7 +232,17 @@ async function createChannel(channelName, userList) {
     // The invite link for the new channel is returned.
     return data.inviteLink;
 }
-
+async function createPrivateChannel(user2) {
+    const user1 = await getUname();
+    // A POST request is sent to the server with the channel name and user list in the request body.
+    const response = await fetch(`/createPrivateChannel/${user1}/${user2}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user1, user2 })
+    });
+}
 // This async function sends a POST request to the server to join a channel with the specified invite link.
 async function joinChannel(inviteLink) {
     // A POST request is sent to the server with the invite link in the request body.
@@ -221,6 +258,25 @@ async function joinChannel(inviteLink) {
     console.log(text);
     return text;
 }
+async function getChannelUsers(channelId) {
+    try {
+        console.log("Channel ID get users: " + channelId);
+        const response = await fetch(`/getChannelUsers/${channelId}`);
+
+        if (response.ok) {
+            const users = await response.json();
+            console.log(users);
+            // The user list is returned.
+            return users;
+        } else {
+            console.error(`Error fetching channel users: ${response.statusText}`);
+            return [];
+        }
+    } catch (error) {
+        console.error(`Error fetching channel users: ${error.message}`);
+        return [];
+    }
+}
 
 // This async function sends a GET request to the server to retrieve a list of all channels.
 async function getChannels() {
@@ -235,38 +291,80 @@ async function getChannels() {
 
 // Add this function to handle subscribing to a channel
 async function subscribeToChannel(channelId) {
+    let Subscription1;
+    let Subscription2;
+    let Subscription3;
     if (stompClient && channelId) {
         const uname = await getUname();
         if (currentChannelId) {
-            // unsubscribe from old channel
-            await stompClient.unsubscribe(`/chat/login/${currentChannelId}`);
-            await stompClient.unsubscribe(`/chat/hello/${currentChannelId}`);
-            await stompClient.unsubscribe(`/chat/message/${currentChannelId}`);
-            clearChatWindow(); // clear the chat window when switching channels
+            if (Subscription1) {
+                await Subscription1.unsubscribe();
+                Subscription1 = null;
+            }
+            if (Subscription2) {
+                await Subscription2.unsubscribe();
+                Subscription2 = null;
+            }
+            if (Subscription3) {
+                await Subscription3.unsubscribe();
+                Subscription3 = null;
+            }
+            clearChatWindow();
         }
-        if (channelId !== currentChannelId) { // subscribe only if not already subscribed
-            await stompClient.subscribe(`/chat/login/${channelId}`, function (message) {
-                displayOldMessages(message, uname);
-            });
-            await stompClient.subscribe(`/chat/hello/${channelId}`, function (message) {
-                console.log("sent");
-            });
-            // subscribe to message topic to receive new messages
-            await stompClient.subscribe(`/chat/message/${channelId}`, function (message) {
-                const msg = JSON.parse(message.body);
-                if (msg.uname === uname) {
-                    appendMessage2(msg, 'green'); // display messages from user in green
-                } else {
-                    appendMessage2(msg, 'red'); // display messages from others in red
-                }
-            });
-            // send username to server on the new channel
-            stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({ 'message': uname }));
-            // set the current channel name in UI
-            const channelName = $("#userChannels button[data-channel-id='" + channelId + "']").text();
-            $("#channel-name").text(channelName);
+        const response = await fetch(`/checkPrivateChannel/${channelId}`);
+        console.log(response);
+        if (response.ok) {
+            const isPrivate = await response.json();
+            console.log(isPrivate);
+            if (isPrivate) {
+                console.log("channel id: " + channelId);
+                const privateChannelName = $("#userChannels button[data-channel-id='" + channelId + "']").text();
+                $("#channel-name").text(privateChannelName);
+                const [_, user1, user2] = privateChannelName.match(/DM:(\w+) and (\w+)/);
+                Subscription1 = await stompClient.subscribe(`/chat/login/${channelId}`, function (message) {
+                    displayOldMessages(message, uname);
+                });
+                // Subscribe to messages from user1 to user2
+                Subscription2 = await stompClient.subscribe(`/chat/message/private/${user1}/${user2}`, function (message) {
+                    handlePrivateMessage(message, uname);
+                });
+                // Subscribe to messages from user2 to user1
+                Subscription3 = await stompClient.subscribe(`/chat/message/private/${user2}/${user1}`, function (message) {
+                    handlePrivateMessage(message, uname);
+                });
+                stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({'message': uname}));
+            }else {
+                Subscription1= await stompClient.subscribe(`/chat/login/${channelId}`, function (message) {
+                    displayOldMessages(message, uname);
+                });
+                Subscription2 = await stompClient.subscribe(`/chat/message/${channelId}`, function (message) {
+                    const msg = JSON.parse(message.body);
+                    if (msg.uname === uname) {
+                        appendMessage2(msg, 'green');
+                    } else {
+                        appendMessage2(msg, 'red');
+                    }
+                });
+                Subscription3 = stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({'message': uname}));
+                const channelName = $("#userChannels button[data-channel-id='" + channelId + "']").text();
+                $("#channel-name").text(channelName);
+            }
         }
-        currentChannelId = channelId; // set current channel id
+        currentChannelId = channelId;
+    }
+}
+
+function handlePrivateMessage(message, uname) {
+    // Check if the message has already been displayed
+    const messageId = JSON.parse(message.body).messageId;
+    if ($("#text tr[data-id='" + messageId + "']").length === 0) {
+        const msg = JSON.parse(message.body);
+        console.log(msg);
+        if (msg.uname === uname) {
+            appendMessage2(msg, 'green');
+        } else {
+            appendMessage2(msg, 'red');
+        }
     }
 }
 
@@ -349,6 +447,16 @@ $(function () {
                 console.log(response);
                 await fetchChannels(); // Fetch and update the channel list after creating a new channel
             }
+        }
+    });
+
+    // Add Create dm button click event
+    $("#CreateDM").on("click", async function () {
+        const username = prompt("Enter username:");
+        if (username) {
+            const response = await createPrivateChannel(username);
+            console.log(response);
+            await fetchChannels(); // Fetch and update the channel list after creating a new channel
         }
     });
 

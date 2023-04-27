@@ -6,6 +6,7 @@ package cse326.SoftwareEng.backEnd;
 public class TextMessage {
     private String message;
     private String uname;
+    private String uname2;
     private String time;
     private String messageId;
     private String channel;
@@ -20,12 +21,13 @@ public class TextMessage {
         this.uname = uname;
     }
 
-    public TextMessage(String message, String uname, String time, String messageId){
+    public TextMessage(String message, String uname, String time, String messageId, String uname2, String channel){
         this.message = message;
         this.uname = uname;
+        this.uname2 = uname2;
         this.time = time;
         this.messageId = messageId;
-        this.channel = "";
+        this.channel = channel;
         System.out.println("Message: " + message + " uname: " + uname + " time: " + time + " messageId: " + messageId);
     }
     public TextMessage(String message, String uname, String time, String messageId, String channel){
