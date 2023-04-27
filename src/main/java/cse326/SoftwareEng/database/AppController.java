@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.repository.query.Param;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
@@ -20,9 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Controller
 @Import(HelloController.class)
@@ -38,7 +39,6 @@ public class AppController {
         this.messageRepository = messageRepository;
         this.userChannelRepository = userChannelRepository;
     }
-
     @Autowired
     private EmailService emailService;
 
@@ -97,25 +97,13 @@ public class AppController {
         redirectAttributes.addFlashAttribute("user", user);
         return "redirect:/signup";
     }
-    @RequestMapping("/deleteAccount")
-    public String deleteAccount(HttpServletRequest request, RedirectAttributes redirectAttributes){
-        String userName = getAuth().getName();
-        userRepo.deleteByUsername(userName);
-       if(messageRepository.existsByUserId(userName))
-           messageRepository.deleteUser(userName);
-        userRepositoryMessageDB.deleteByUsername(userName);
-        SecurityContextHolder.clearContext();
-        new SecurityContextLogoutHandler().logout(request, null, null);
-        redirectAttributes.addFlashAttribute("message", "Account has been deleted.");
-        return "redirect:/signup";
-    }
 
     @RequestMapping("/login")
     public String login() {
         if (getAuth() == null || AnonymousAuthenticationToken.class.
                 isAssignableFrom(getAuth().getClass()))
             return "login";
-        return "redirect:/chat_index";
+        return "redirect:/chat";
     }
 
     @RequestMapping("/contacts")
@@ -126,18 +114,26 @@ public class AppController {
     }
 
     @GetMapping("/profile")
-    public String profile() {
+    public String profile(Model model) {
+        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        model.addAttribute("id", user.getId());
+        model.addAttribute("createdAt", user.getCreatedAt());
         return "profile";
     }
 
     @PostMapping( "/changeUsername")
-    public String changeUsername(@RequestParam("username") String username, Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
+    public String changeUsername(RedirectAttributes redirectAttributes, @RequestParam("username") String username) {
+        System.out.print("[Username] "+username);
         if(userRepo.findByUsername(username) == null){
             User user = userRepo.findByUsername(getAuth().getName());
-            //user.setUsername(username);
-            //userRepo.save(user);
+            user.setUsername(username);
+            userRepo.save(user);
+            Authentication auth = getAuth();
+            List<GrantedAuthority> updatedAuthorities = new ArrayList<>(auth.getAuthorities());
+            updatedAuthorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            Authentication newAuth = new UsernamePasswordAuthenticationToken(username, auth.getCredentials(), updatedAuthorities);
+            SecurityContextHolder.getContext().setAuthentication(newAuth);
             redirectAttributes.addFlashAttribute("message", "Username has been change.");
-            System.out.println("[Username]"+username);
         }
         else
             redirectAttributes.addFlashAttribute("error", "Username is already taken.");
@@ -145,11 +141,12 @@ public class AppController {
     }
 
     @PostMapping( "/changeEmail")
-    public String  changeEmail(@RequestParam("email") String email,Authentication authentication,  Model model, RedirectAttributes redirectAttributes) {
+    public String  changeEmail(RedirectAttributes redirectAttributes, @RequestParam("email") String email) {
+
         if(userRepo.findByEmail(email) == null){
             User user = userRepo.findByUsername(getAuth().getName());
-            //user.setEmail(email);
-            //userRepo.save(user);
+            user.setEmail(email);
+            userRepo.save(user);
             redirectAttributes.addFlashAttribute("message", "Email has been change.");
             System.out.println("Email has been change.");
         }
@@ -158,21 +155,34 @@ public class AppController {
         return "redirect:/profile";
     }
 
+    @RequestMapping("/deleteAccount")
+    public String deleteAccount(HttpServletRequest request, RedirectAttributes redirectAttributes){
+        String userName = getAuth().getName();
+        userRepo.deleteByUsername(userName);
+        if(messageRepository.existsByUserId(userName))
+            messageRepository.deleteUser(userName);
+        userRepositoryMessageDB.deleteByUsername(userName);
+        SecurityContextHolder.clearContext();
+        new SecurityContextLogoutHandler().logout(request, null, null);
+        redirectAttributes.addFlashAttribute("message", "Account has been deleted.");
+        return "redirect:/signup";
+    }
+
     @GetMapping("/security")
     public String security() {
         return "security";
     }
 
     @PostMapping( "/changePassword")
-    public String  changePassword(@RequestParam("currentPassword") String currentPassword,
-                                        @RequestParam("newPassword") String newPassword,
-                                        @RequestParam("confirmPassword") String confirmPassword,
-                                        Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    public String  changePassword(RedirectAttributes redirectAttributes,
+            @RequestParam("currentPassword") String currentPassword,
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("confirmPassword") String confirmPassword
+        ) {
         Authentication auth = getAuth();
         User user = userRepo.findByUsername(auth.getName());
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-        System.out.print("[Password]: " + confirmPassword);
+        //System.out.print("[Password]: " + confirmPassword);
         if(!passwordEncoder.matches(currentPassword, user.getPassword())) {
             redirectAttributes.addFlashAttribute("error", "The current password is incorrect.");
         }
@@ -183,61 +193,26 @@ public class AppController {
             redirectAttributes.addFlashAttribute("error", "The new password cannot be the same as the current password.");
         }
         else {
-            redirectAttributes.addFlashAttribute("success", "Your password has been updated successfully.");
-            /*user.setPassword(passwordEncoder.encode(newPassword));
-            Date javaDate = new Date();
-            user.setUpdated_at(new Timestamp(javaDate.getTime()));
-            userRepo.save(user);
-            SecurityContextHolder.clearContext();*/
-        }
-        return "redirect:/security";
-    }
-    @PostMapping( "/changeVerification")
-    public String change2FA(@RequestParam("2FA") boolean verification, Model model, RedirectAttributes redirectAttributes) {
-        User user = userRepo.findByUsername(getAuth().getName());
-        //user.setVerification(verification);
-        System.out.println("[2FA]" + verification);
-        if(verification)
-            redirectAttributes.addFlashAttribute("message", "2FA has been enable.");
-        else
-            redirectAttributes.addFlashAttribute("message", "2FA has been disable.");
-        return "redirect:/security";
-    }
-    /*
-    @RequestMapping("/updatePassword")
-    public String updatePassword(@RequestParam("currentPassword") String currentPassword,
-                                 @RequestParam("newPassword") String newPassword,
-                                 @RequestParam("confirmPassword") String confirmPassword,
-                                 Model model, HttpServletRequest request) {
-
-        Authentication auth = getAuth();
-        User user = userRepo.findByUsername(auth.getName());
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-
-        if(!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            model.addAttribute("error", "The current password is incorrect.");
-            return "ChangePassword";
-        }
-        else if (!newPassword.equals(confirmPassword)) {
-            model.addAttribute("error", "The new password and confirm password do not match.");
-            return "ChangePassword";
-        }
-        else if(passwordEncoder.matches(newPassword, user.getPassword())) {
-            model.addAttribute("error", "The new password cannot be the same as the current password.");
-            return "ChangePassword";
-        }
-        else {
+            redirectAttributes.addFlashAttribute("message", "Your password has been updated successfully.");
             user.setPassword(passwordEncoder.encode(newPassword));
             Date javaDate = new Date();
             user.setUpdated_at(new Timestamp(javaDate.getTime()));
             userRepo.save(user);
-            model.addAttribute("success", "Your password has been updated successfully.");
-            SecurityContextHolder.clearContext();
-            new SecurityContextLogoutHandler().logout(request, null, null);
-        return "update_success";
         }
-    }*/
+        return "redirect:/security";
+    }
+    @PostMapping( "/changeVerification")
+    public String change2FA(RedirectAttributes redirectAttributes) {
+        User user = userRepo.findByUsername(getAuth().getName());
+        boolean verification = !user.getVerification();
+        user.setVerification(verification);
+        userRepo.save(user);
+        if(verification)
+            redirectAttributes.addFlashAttribute("message", "2FA has been enable.");
+        else
+            redirectAttributes.addFlashAttribute("error", "2FA has been disable.");
+        return "redirect:/security";
+    }
 
     @GetMapping("/preference")
     public String preference() {
@@ -245,7 +220,7 @@ public class AppController {
     }
 
     @GetMapping("/forgot_password")
-    public String showForgotPasswordForm() {
+    public String showForgotPassword() {
         return "forgot_password";
     }
 

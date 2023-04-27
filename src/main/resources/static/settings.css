@@ -18,6 +18,7 @@
 }
 
 .nav-setting a:hover {
+    text-decoration: none;
     border-bottom-color: rgba(255, 255, 255, .25);
 }
 
@@ -29,16 +30,14 @@
     border-bottom-color: white !important;
 }
 
-.section{
-    width: 800px;
-    margin-right: auto;
-    margin-left: auto;
-    padding: 1em;
-    display:block;
+.container{
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100vh;
 }
 
 .section-body{
-    padding: 1em 4em;
+    padding: 1.5em;
     background-color: #313338;
     color: white;
 }

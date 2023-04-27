@@ -54,16 +54,16 @@ public class WebSecurityConfig{
             .authorizeHttpRequests(requests -> {
                 try {
                     requests
-                    .requestMatchers("/users", "/myUsername", "/chat_index","/chat", "/chat-websocket",
-                            "/contacts", "settings",
-                            "/app", "/name", "/changeUsername", "/ChangePassword", "/updatePassword").authenticated()
+                    .requestMatchers("/myUsername", "/chat", "/chat-websocket", "/app", "/name",
+                            "/contacts", "/profile", "/security", "/preference",
+                            "/changeUsername", "/changeEmail", "/deleteAccount", "/changePassword", "/changeVerification").authenticated()
                     .anyRequest().permitAll()
                     .and()
                     .formLogin()
                     .authenticationDetailsSource(authenticationDetailsSource)
                     .usernameParameter("username")
                     .loginPage("/login")
-                    .defaultSuccessUrl("/chat_index", true)
+                    .defaultSuccessUrl("/chat", true)
                     .failureHandler(loginFailureHandler)//.failureUrl("/login?error=true")
                     .permitAll()
                     .and()

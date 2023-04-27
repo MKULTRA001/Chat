@@ -108,9 +108,9 @@ public class HelloController{
         return new TextMessage(username + ":" + response.toString());
     }
 
-    @RequestMapping("/chat_index")
+    @RequestMapping("/chat")
     public String TestIndex(){
-        return "chat_index";
+        return "chat";
     }
     @RequestMapping(value = "/myUsername", method = RequestMethod.GET)
     @ResponseBody

@@ -74,59 +74,16 @@ h3{
     display:flex;
     flex-flow:column;
 }
-#conversation tr {
-    line-height: 1;
-    display: block;
-    margin-bottom: 4px;
-}
-.channels {
-    /* Add any styles you want for the 'channels' class */
-    padding: 1rem;
-}
 
-.channels .header {
-    /* Add styles for the 'header' class inside the 'channels' class */
-    margin-bottom: 1rem;
-}
-
-.channels .channel-buttons {
-    /* Add styles for the 'channel-buttons' class inside the 'channels' class */
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.channels .btn {
-    /* Add styles for the 'btn' class inside the 'channels' class */
-    width: 48%;
-}
-
-.channels .channel-list {
-    /* Add styles for the 'channel-list' class inside the 'channels' class */
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.channels .channel-list .channel-button {
-    /* Add styles for the 'channel-button' class inside the 'channel-list' class */
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    background-color: #495057;
+.input-settings{
     color: white;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 16px;
+    background: #2d2d2d;
+    border: 1px solid #495057;
+    box-shadow: none !important;
 }
 
-.channels .channel-list .channel-button:hover {
-    background-color: #1787c7;
-}
-.channels .channel-list .channel-button.selected {
-    background-color: #1787c7;
+.input-settings:focus{
+    color: white;
+    background: #2d2d2d;
+    border: 1px solid #495057;
 }

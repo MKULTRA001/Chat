@@ -37,7 +37,7 @@ public class EmailService {
                 + "<p><b>" + user.getVerificationCode() + "</b></p>"
                 + "<p>Note: this verification code is set to expire in 5 minutes.</p>";
             sendMail(user.getEmail(), "Chat Verification Code", text);
-    }//Todo: modify to remove code parameter
+    }
 
     public void sendRest(User user, String URL){
         String text = "<p>Hello " + user.getUsername() + ",</p>"

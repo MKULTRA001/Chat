@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:sec="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Profile</title>
-    <!-- Font Awesome CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- Favicon --><link rel=icon href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/comments.svg>
+    <!-- Font Awesome Icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Bootstrap CSS --><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+                                integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- Icons for alert message --><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../static/main.css">
     <link rel="stylesheet" href="../static/settings.css">
 </head>
@@ -17,8 +17,8 @@
         <a th:href="@{/}">
             <i class="fa fa-comments-o brand"></i>
         </a>
-        <nav class="nav flex-column justify-content-center">
-            <a th:href="@{/chat_index}">
+        <nav class="navigation">
+            <a th:href="@{/chat}">
                 <i class="fa fa-comment-o item"></i>
             </a>
             <a th:href="@{/contacts}">
@@ -38,37 +38,65 @@
             <a th:href="@{/security}">Security</a>
             <a th:href="@{/preference}">Preference</a>
         </nav>
-        <div class="section mt-3">
-            <h3>Account Info</h3>
-            <div class = "section-body ">
-                <span>Account ID: </span>[[${id}]]<br>
-                <span> Creation Date: </span>[[${createdAt}]]
-            </div>
-        </div>
-        <div class="section mt-3">
-            <h3>Username</h3>
-            <div class = "section-body ">
-                <span>[[${username}]]</span>
-                <form th:action="@{/changeUsername}" method="post">
-                    <div class="input-group chat-input">
-                        <label for="username"></label>
-                        <input type="text" id="username" name="username" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Username">
-                        <button class="btn btn-primary" type="submit">Change</button>
+        <div class="container">
+            <div class="col-xl-8 mx-auto">
+                <div th:if="${error != null}" class="alert alert-danger d-flex mt-4">
+                    <i class="bi-exclamation-octagon-fill"></i>
+                    <strong class="mx-2">Error!</strong>[[${error}]]
+                </div>
+                <div th:if="${message != null}" class="alert alert-primary d-flex mt-4">
+                    <i class="bi-info-circle-fill"></i>
+                    <strong class="mx-2">Info!</strong>[[${message}]]
+                </div>
+                <div class="mt-4">
+                    <h3>Account Info</h3>
+                    <div class="section-body ">
+                        <span>Account ID: </span>[[${id}]]<br>
+                        <span> Creation Date: </span>[[${createdAt}]]
                     </div>
-                </form>
-            </div>
-        </div>
-        <div class="section mt-3">
-            <h3>Email</h3>
-            <div class = "section-body">
-                <span>[[${email}]]</span>
-                <form th:action="@{/changeEmail}" method="post">
-                    <div class="input-group chat-input">
-                        <label for="email"></label>
-                        <input type="text" id="email" name="email" class="form-control" style="color: white; background: #2d2d2d; border: 1px solid #495057;" placeholder="Email">
-                        <button class="btn btn-primary" type="submit">Change</button>
+                </div>
+                <div class="mt-4">
+                    <h3>Username</h3>
+                    <div class="section-body ">
+                        <form th:action="@{/changeUsername}" method="post">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <input type="text" id="username" name="username" class="form-control input-settings" placeholder="Username" minlength="1" maxlength="24">
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary" type="submit">Change</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
+                <div class="mt-4">
+                    <h3>Email</h3>
+                    <div class="section-body">
+                        <form th:action="@{/changeEmail}" method="post">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <input type="email" id="email" name="email" class="form-control col input-settings" placeholder="Email" require>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary" type="submit">Change</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="mt-4 mb-5">
+                    <h3>Delete Account</h3>
+                    <div class="section-body">
+                        <form th:action="@{/deleteAccount}" method="post">
+                            <div class="row">
+                                <div class="col-md-12 text-right">
+                                    <button class="btn btn-danger" type="submit">Delete</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
