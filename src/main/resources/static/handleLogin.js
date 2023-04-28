@@ -81,9 +81,22 @@ async function handleLogin() {
             ["encrypt", "decrypt"]
         );
         console.log('Derived key B.');
+        // Derive bits from keyA
+        console.log('Deriving bits from key A...');
+        const keyABits = await window.crypto.subtle.deriveBits(
+            {
+                "name": "PBKDF2",
+                "salt": new TextEncoder().encode(username + seed + "keyA"),
+                "iterations": 100000,
+                "hash": "SHA-256"
+            },
+            keyMaterial,
+            256
+        );
+        console.log('Derived bits from key A.');
 
         console.log('Generating Curve25519 key pair...');
-        const seedBuffer = new TextEncoder().encode(seed);
+        const seedBuffer = new Uint8Array(keyABits);
         const curveKeyPair = await generateCurve25519KeyPairFromSeed(naclInstance, seedBuffer);
         const privateKey = curveKeyPair.privateKey;
         const publicKey = curveKeyPair.publicKey;

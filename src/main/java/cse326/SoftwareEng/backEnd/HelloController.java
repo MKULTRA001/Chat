@@ -235,6 +235,7 @@ public class HelloController{
         }
         System.out.println("savePublicKey: " + publicKey.length);
         String currentUser = currentUserName();
+        System.out.println("savePublicKey: " + currentUser);
         UserMessageDB user = userRepositoryMessageDB.findByUsername(currentUser);
         if (user == null) {
             return new ResponseEntity<>("User not found.", HttpStatus.BAD_REQUEST);
@@ -249,6 +250,7 @@ public class HelloController{
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
         }
+        System.out.println("getPublicKey: " + user.getUsername());
         return Base64.getEncoder().encodeToString(user.getPublicKey());
     }
     @GetMapping("/getChannels")

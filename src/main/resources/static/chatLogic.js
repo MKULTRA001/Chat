@@ -33,9 +33,11 @@ function appendMessage2(packet, color) {
 }
 //
 function isEncryptedMessage(message) {
-    const pattern = /^[A-Za-z0-9+/]+={0,2}$/;
-    const trimmedMessage = message.trim();
-    return pattern.test(trimmedMessage);
+    try {
+        return btoa(atob(message)) === message;
+    } catch (error) {
+        return false;
+    }
 }
 // This function is used to display old messages in the chat window.
 async function displayOldMessages(message, uname) {
@@ -45,7 +47,6 @@ async function displayOldMessages(message, uname) {
     const oldMessages = response.message.split('\n');
     console.log("old messages: " + oldMessages);
     const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
-    const publicKeyMap = {};
     // If the first message in the old messages array starts with the current user's name followed by a colon,
     // then the chat window is cleared before displaying the old messages.
     if (oldMessages[0].startsWith(uname + ":")) {
@@ -59,14 +60,17 @@ async function displayOldMessages(message, uname) {
                 // the message is appended to the chat window using the appendMessage function with the color
                 // of the sender's name being green and the color of the recipient's name being red.
                 if (response.recipient === uname || !response.recipient) {
-                    if (isEncryptedMessage(msgArray[1])) {
-                        if (!publicKeyMap[msgArray[0]]) {
-                            publicKeyMap[msgArray[0]] = await getRecipientsPublicKey(msgArray[0]);
+                    if (isEncryptedMessage(msgArray[1].trim())) {
+                        if(msgArray[0] !== uname) {
+                            const publicKey = await getRecipientsPublicKey(msgArray[0]);
+                            console.log("67 publicKey: " + msgArray[0]);
+                            const decryptedMessage = decryptDirectMessage(msgArray[1], privateKey, publicKey);
+                            appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? '#2fa4e7' : 'white');
                         }
-                        const publicKey = publicKeyMap[msgArray[0]];
-                        const decryptedMessage = decryptDirectMessage(msgArray[1], privateKey, publicKey);
-                        appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? '#2fa4e7' : 'white');
-                    } else {
+                        else{
+                            appendMessage(`${msgArray[0]}: ${msgArray[1]}`, uname === msgArray[0] ? '#2fa4e7' : 'white');
+                        }
+                    }else{
                         appendMessage(oldMessage, uname === msgArray[0] ? '#2fa4e7' : 'white');
                     }
                 }
@@ -354,24 +358,23 @@ async function subscribeToChannel(channelId) {
                 });
                 // Subscribe to messages from user1 to user2
                 Subscription2 = await stompClient.subscribe(`/chat/message/private/${user1}/${user2}`, async function (message) {
-                    console.log("user1: " + user1);
+                    console.log("2user1: " + user1);
                     console.log("user2: " + user2);
                     const messageId = JSON.parse(message.body).messageId;
                     if ($("#text tr[data-id='" + messageId + "']").length === 0) {
-                        const msg = await handlePrivateMessage(message, uname, user2);
+                        const msg = await handlePrivateMessage(message, uname,  JSON.parse(message.body).uname);
                         console.log(msg)
                             appendMessage2(msg, 'red');
                         }
                 });
-                // Subscribe to messages from user2 to user1
                 Subscription3 = await stompClient.subscribe(`/chat/message/private/${user2}/${user1}`, async function (message) {
-                    console.log("user1: " + user1);
+                    console.log("2user1: " + user1);
                     console.log("user2: " + user2);
                     const messageId = JSON.parse(message.body).messageId;
                     if ($("#text tr[data-id='" + messageId + "']").length === 0) {
-                        const msg = await handlePrivateMessage(message, uname, user2);
+                        const msg = await handlePrivateMessage(message, uname,  JSON.parse(message.body).uname);
                         console.log(msg)
-                            appendMessage2(msg, 'red');
+                        appendMessage2(msg, 'red');
                     }
                 });
                 stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({'message': uname}));
@@ -532,8 +535,6 @@ async function directMessageEncryption(message, recipientPublicKey, senderPrivat
     console.log('directMessageEncryption: ', message, recipientPublicKey, senderPrivateKey)
     const encoder = new TextEncoder();
     const messageUint8Array = encoder.encode(message);
-
-    const senderPublicKey = nacl.box.keyPair.fromSecretKey(senderPrivateKey).publicKey;
 
     const nonce = nacl.randomBytes(nacl.box.nonceLength);
 
