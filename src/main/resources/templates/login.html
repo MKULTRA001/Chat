@@ -8,6 +8,12 @@
                                 integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <!-- Font Awesome Icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="../static/form.css">
+    <script src="../static/handleLogin.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-nacl/1.4.0/nacl_factory.min.js"></script>
+
     <!-- Message Alert --><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
@@ -29,7 +35,7 @@
                     <div class="card mt-5">
                         <span class="header mb-3 "><i class="fa fa-comments-o icon"></i> Chat</span>
                         <div class="title mb-3">Login</div>
-                        <form method="post" action="/login">
+                        <form id="login-form" method="post" action="/login">
                             <div class="form-group mb-4">
                                 <input type="text" name="username" placeholder=" " class="form-control form-control-lg shadow-none box" required>
                                 <label class="label-text">Username</label>
@@ -54,7 +60,12 @@
                     </div>
                 </div>
             </div>
-        </div>
+        <script>
+            document.getElementById('login-form').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                await handleLogin();
+            });
+        </script>
     </section>
 </body>
 </html>

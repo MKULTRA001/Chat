@@ -17,7 +17,8 @@ public class UserMessageDB {
     @Column(name = "username", nullable = false, length = 25)
     private String username;
 
-
+    @Column(name = "public_key", nullable = true, columnDefinition = "VARBINARY(32)")
+    private byte[] publicKey;
 
     @OneToMany(mappedBy = "user")
     private List<Message> messages;
@@ -80,5 +81,13 @@ public class UserMessageDB {
     public void removeMessage(Message message) {
         this.messages.remove(message);
         message.setUser(null);
+    }
+
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(byte[] publicKey) {
+        this.publicKey = publicKey;
     }
 }

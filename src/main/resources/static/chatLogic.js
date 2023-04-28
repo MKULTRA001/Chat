@@ -1,6 +1,5 @@
 // Declare a variable to store the Stomp client object, initially set to null
 let stompClient = null;
-
 // Declare a boolean variable to keep track of whether the socket is open, initially set to false
 let open = false;
 let currentChannelId = null;
@@ -14,28 +13,39 @@ async function getUname() {
 
 // A function that appends a new message to the chat window
 function appendMessage(message, color) {
+    console.log("in append message: ");
     // Append a new row to the table with the specified background color and message content
     let sanitized = $('<div>').text(message).html();
+    console.log("sanitized: " + sanitized);
     $("#text").append(`<tr style = 'color: ${color}' data-id = 'id' data-uid = 'uid' data-ts = 'ts'><td>${sanitized}</td></tr>`);
 }
 
 // Metadata included message; send message as full json object
 function appendMessage2(packet, color) {
+    console.log("in append message 2: ");
     // The message is first sanitized to prevent any potential security vulnerabilities
     let sanitized = $('<div>').text(packet.message).html();
     // A timestamp is also added to the message
     let ts = 'data-ts = \"' + packet.time + '\"';
     // The message is then appended to the chat window using jQuery
+    console.log("sanitized: " + sanitized);
     $("#text").append(`<tr style = 'color: ${color}' data-id = ${packet.messageId} data-uid = ${packet.uname} ${ts}><td>${sanitized}</td></tr>`);
 }
-
+//
+function isEncryptedMessage(message) {
+    const pattern = /^[A-Za-z0-9+/]+={0,2}$/;
+    const trimmedMessage = message.trim();
+    return pattern.test(trimmedMessage);
+}
 // This function is used to display old messages in the chat window.
-function displayOldMessages(message, uname) {
+async function displayOldMessages(message, uname) {
     // The response message is parsed as JSON
     const response = JSON.parse(message.body);
     // The old messages are then extracted and split based on newlines
     const oldMessages = response.message.split('\n');
     console.log("old messages: " + oldMessages);
+    const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+    const publicKeyMap = {};
     // If the first message in the old messages array starts with the current user's name followed by a colon,
     // then the chat window is cleared before displaying the old messages.
     if (oldMessages[0].startsWith(uname + ":")) {
@@ -49,7 +59,16 @@ function displayOldMessages(message, uname) {
                 // the message is appended to the chat window using the appendMessage function with the color
                 // of the sender's name being green and the color of the recipient's name being red.
                 if (response.recipient === uname || !response.recipient) {
-                    appendMessage(oldMessage, uname === msgArray[0] ? '#2fa4e7' : 'white');
+                    if (isEncryptedMessage(msgArray[1])) {
+                        if (!publicKeyMap[msgArray[0]]) {
+                            publicKeyMap[msgArray[0]] = await getRecipientsPublicKey(msgArray[0]);
+                        }
+                        const publicKey = publicKeyMap[msgArray[0]];
+                        const decryptedMessage = decryptDirectMessage(msgArray[1], privateKey, publicKey);
+                        appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? '#2fa4e7' : 'white');
+                    } else {
+                        appendMessage(oldMessage, uname === msgArray[0] ? '#2fa4e7' : 'white');
+                    }
                 }
             }
         }
@@ -181,8 +200,18 @@ async function sendDirectMessage(currentChannelId, message) {
         const target = users.find(user => user !== uname);
         if (target) {
             const destination = `/app/chat/private/${uname}/${target}`;
+            const publicKey = await getRecipientsPublicKey(target);
+            const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+            // Encrypt the message
+            const encryptedMessage = await directMessageEncryption(message, publicKey, privateKey);
+
+            // Print the encrypted message
+            console.log("Encrypted message:", encryptedMessage);
+            //
+          //  const encryptedMessage = await directMessageEncryption(privateKey, publicKey, message);
+           // console.log("Encrypted Message: " + encryptedMessage);
             stompClient.send(destination, {}, JSON.stringify({
-                'message': `${uname}: ${message}`,
+                'message': `${uname}: ${encryptedMessage}`,
                 'channel': currentChannelId
             }));
         } else {
@@ -192,7 +221,6 @@ async function sendDirectMessage(currentChannelId, message) {
         console.error("Error: The channel must have exactly 2 users.");
     }
 }
-
 
 // A function that sends the current user's username to the server
 function name() {
@@ -325,12 +353,26 @@ async function subscribeToChannel(channelId) {
                     displayOldMessages(message, uname);
                 });
                 // Subscribe to messages from user1 to user2
-                Subscription2 = await stompClient.subscribe(`/chat/message/private/${user1}/${user2}`, function (message) {
-                    handlePrivateMessage(message, uname);
+                Subscription2 = await stompClient.subscribe(`/chat/message/private/${user1}/${user2}`, async function (message) {
+                    console.log("user1: " + user1);
+                    console.log("user2: " + user2);
+                    const messageId = JSON.parse(message.body).messageId;
+                    if ($("#text tr[data-id='" + messageId + "']").length === 0) {
+                        const msg = await handlePrivateMessage(message, uname, user2);
+                        console.log(msg)
+                            appendMessage2(msg, 'red');
+                        }
                 });
                 // Subscribe to messages from user2 to user1
-                Subscription3 = await stompClient.subscribe(`/chat/message/private/${user2}/${user1}`, function (message) {
-                    handlePrivateMessage(message, uname);
+                Subscription3 = await stompClient.subscribe(`/chat/message/private/${user2}/${user1}`, async function (message) {
+                    console.log("user1: " + user1);
+                    console.log("user2: " + user2);
+                    const messageId = JSON.parse(message.body).messageId;
+                    if ($("#text tr[data-id='" + messageId + "']").length === 0) {
+                        const msg = await handlePrivateMessage(message, uname, user2);
+                        console.log(msg)
+                            appendMessage2(msg, 'red');
+                    }
                 });
                 stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({'message': uname}));
             }else {
@@ -354,19 +396,34 @@ async function subscribeToChannel(channelId) {
     }
 }
 
-function handlePrivateMessage(message, uname) {
+async function handlePrivateMessage(message, uname, target) {
+    const publicKey = await getRecipientsPublicKey(target);
+    const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+
     // Check if the message has already been displayed
     const messageId = JSON.parse(message.body).messageId;
     if ($("#text tr[data-id='" + messageId + "']").length === 0) {
         const msg = JSON.parse(message.body);
-        console.log(msg);
-        if (msg.uname === uname) {
-            appendMessage2(msg, 'green');
-        } else {
-            appendMessage2(msg, 'red');
+
+        // Extract the encrypted message from the msg.message property
+        const encryptedMessage = msg.message.split(': ')[1];
+
+        try {
+            const decryptedMessage = decryptDirectMessage(encryptedMessage, privateKey, publicKey);
+            console.log("Decrypted message:", decryptedMessage);
+
+            // Update the msg.message property with the decrypted message
+            msg.message = `${msg.uname}: ${decryptedMessage}`;
+
+            console.log(msg);
+
+            return msg;
+        } catch (error) {
+            console.error("Error:", error.message);
         }
     }
 }
+
 
 
 
@@ -419,9 +476,143 @@ async function fetchChannels() {
         }, 200); // delay for half a second before subscribing to the first channel
     }
 }
+async function loadCurve25519KeyFromLocalStorage(keyName) {
+    const keyArray = JSON.parse(localStorage.getItem(keyName));
+    const key = new Uint8Array(keyArray);
+    console.log(`Loaded ${keyName} from local storage:`, key);
+
+    // Send the public key as a JSON object if it's the public key
+    if (keyName === "publicKey") {
+        const data = {
+            publicKey: Array.from(key) // Convert Uint8Array to a regular array
+        };
+        await fetch('/savePublicKey', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+    }
+
+    return key;
+}
+
+async function loadKeyFromLocalStorage(keyName, keyType) {
+    const jwk = JSON.parse(localStorage.getItem(keyName));
+    let importOptions;
+    console.log(`Loaded ${keyName} from local storage:`, jwk);
+    if (keyType === 'AES') {
+        importOptions = { name: "AES-GCM", length: 256 };
+    } else if (keyType === 'Ed25519') {
+        importOptions = {
+            name: "Ed25519",
+        };
+    } else {
+        throw new Error('Invalid key type.');
+    }
+    return await window.crypto.subtle.importKey(
+        "jwk",
+        jwk,
+        importOptions,
+        true,
+        keyType === 'AES' ? ["encrypt", "decrypt"] : ["decrypt"]
+    );
+}
+async function getRecipientsPublicKey(username) {
+
+    const response = await fetch(`/getPublicKey/${username}`);
+    if (!response.ok) {
+        throw new Error(`Error getting public key: ${response.status} ${response.statusText}`);
+    }
+    const publicKeyBase64 = await response.text();
+    return new Uint8Array(atob(publicKeyBase64).split('').map(char => char.charCodeAt(0)));
+}
+async function directMessageEncryption(message, recipientPublicKey, senderPrivateKey) {
+    console.log('directMessageEncryption: ', message, recipientPublicKey, senderPrivateKey)
+    const encoder = new TextEncoder();
+    const messageUint8Array = encoder.encode(message);
+
+    const senderPublicKey = nacl.box.keyPair.fromSecretKey(senderPrivateKey).publicKey;
+
+    const nonce = nacl.randomBytes(nacl.box.nonceLength);
+
+    const encryptedMessage = nacl.box(messageUint8Array, nonce, recipientPublicKey, senderPrivateKey);
+
+    const encryptedMessageWithNonce = new Uint8Array(nacl.box.nonceLength + encryptedMessage.length);
+    encryptedMessageWithNonce.set(nonce);
+    encryptedMessageWithNonce.set(encryptedMessage, nonce.length);
+
+    const uint8ToString = (buf) => String.fromCharCode.apply(null, buf);
+    const encryptedMessageBase64 = btoa(uint8ToString(encryptedMessageWithNonce));
+
+    return encryptedMessageBase64;
+}
+
+function decryptDirectMessage(message, recipientPrivateKey, senderPublicKey) {
+    console.log('decryptDirectMessage: ', message, recipientPrivateKey, senderPublicKey)
+    const stringToUint8 = (str) => new Uint8Array(str.split('').map((char) => char.charCodeAt(0)));
+    const encryptedMessageWithNonce = stringToUint8(atob(message));
+
+    const nonce = encryptedMessageWithNonce.slice(0, nacl.box.nonceLength);
+    const encryptedMessage = encryptedMessageWithNonce.slice(nacl.box.nonceLength);
+
+    const decryptedMessageUint8Array = nacl.box.open(encryptedMessage, nonce, senderPublicKey, recipientPrivateKey);
+
+    if (!decryptedMessageUint8Array) {
+        throw new Error('Decryption failed');
+    }
+
+    const decoder = new TextDecoder();
+    const decryptedMessage = decoder.decode(decryptedMessageUint8Array);
+
+    return decryptedMessage;
+}
+
+function loadTweetNaCl(callback) {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js';
+    script.onload = function() {
+        if (typeof callback === 'function') {
+            callback();
+        }
+    };
+    document.head.appendChild(script);
+}
 
 // A function that runs when the page is loaded
-$(function () {
+$(async function () {
+    loadTweetNaCl();
+    //test
+        // Generate key pairs for sender and recipient
+        const senderKeyPair = nacl.box.keyPair();
+        const recipientKeyPair = nacl.box.keyPair();
+        console.log("Sender key pair:", senderKeyPair);
+        console.log("Recipient key pair:", recipientKeyPair);
+        // Original message
+        const message = "Hello, this is a secret message!";
+
+        // Encrypt the message
+        const encryptedMessage = await directMessageEncryption(message, recipientKeyPair.publicKey, senderKeyPair.secretKey);
+
+        // Print the encrypted message
+        console.log("Encrypted message:", encryptedMessage);
+
+        // Decrypt the message
+        try {
+            const decryptedMessage = decryptDirectMessage(encryptedMessage, recipientKeyPair.secretKey, senderKeyPair.publicKey);
+            console.log("Decrypted message:", decryptedMessage);
+        } catch (error) {
+            console.error("Error:", error.message);
+        }
+
+
+
+    const keyA = await loadKeyFromLocalStorage("keyA", 'AES');
+    const keyB = await loadKeyFromLocalStorage("keyB", 'AES');
+    const privateKey = loadCurve25519KeyFromLocalStorage("privateKey");
+    const publicKey = loadCurve25519KeyFromLocalStorage("publicKey");
+
     // Prevent the form from submitting when the "Enter" key is pressed
     $("form").on('submit', function (e) {
         e.preventDefault();
@@ -430,7 +621,8 @@ $(function () {
     getUname().then(uname => $("#username_Update").replaceWith("Username: " + uname));
     // Call the name function to set up the "Send" button
     name();
-    fetchChannels().then(() => {});
+    fetchChannels().then(() => {
+    });
     // Set up event listeners for the "Connect", "Disconnect", and "Send" buttons
     $("#connect").click(connect);
     $("#disconnect").click(disconnect);

@@ -2,11 +2,13 @@ package cse326.SoftwareEng.backEnd;
 
 import cse326.SoftwareEng.database.messageDB.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -219,7 +221,36 @@ public class HelloController{
         userChannelRepository.save(userChannel);
         return new ResponseEntity<>("Joined channel successfully.", HttpStatus.OK);
     }
-
+    @PostMapping(value = "/savePublicKey", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> savePublicKey(@RequestBody Map<String, List<Integer>> payload) {
+        List<Integer> publicKeyList = payload.get("publicKey");
+        if (publicKeyList == null) {
+            return new ResponseEntity<>("Public key not provided.", HttpStatus.BAD_REQUEST);
+        }
+        System.out.println("savePublicKey: " + publicKeyList);
+        // Convert List<Integer> to byte[]
+        byte[] publicKey = new byte[publicKeyList.size()];
+        for (int i = 0; i < publicKeyList.size(); i++) {
+            publicKey[i] = publicKeyList.get(i).byteValue();
+        }
+        System.out.println("savePublicKey: " + publicKey.length);
+        String currentUser = currentUserName();
+        UserMessageDB user = userRepositoryMessageDB.findByUsername(currentUser);
+        if (user == null) {
+            return new ResponseEntity<>("User not found.", HttpStatus.BAD_REQUEST);
+        }
+        userRepositoryMessageDB.updatePublicKeyByUsername(publicKey, user.getUsername());
+        return new ResponseEntity<>("Public key saved successfully.", HttpStatus.OK);
+    }
+    @GetMapping("/getPublicKey/{username}")
+    @ResponseBody
+    public String getPublicKey(@PathVariable String username) {
+        UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+        return Base64.getEncoder().encodeToString(user.getPublicKey());
+    }
     @GetMapping("/getChannels")
     @ResponseBody
     public List<Channel> getChannels() {

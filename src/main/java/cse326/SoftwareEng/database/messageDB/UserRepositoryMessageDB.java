@@ -24,5 +24,11 @@ public interface UserRepositoryMessageDB extends JpaRepository<UserMessageDB, St
     @Transactional
     @Query("DELETE FROM UserMessageDB u WHERE u.username = ?1")
     void deleteByUsername(String userName);
+    @Modifying
+    @Transactional
+    @Query("UPDATE UserMessageDB u SET u.publicKey = ?1 WHERE u.username = ?2")
+    void updatePublicKeyByUsername(byte[] publicKey, String username);
+    @Query("SELECT u.publicKey FROM UserMessageDB u WHERE u.username = ?1")
+    byte[] findPublicKeyByUsername(String username);
 
 }
