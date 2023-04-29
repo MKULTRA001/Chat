@@ -1,6 +1,6 @@
 /**This class tests the MessageRepository class using an H2 database*/
 
-package cse326.SoftwareEng.database.messageDB;
+package cse326.SoftwareEng.chat.message;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
