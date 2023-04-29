@@ -1,6 +1,8 @@
 function lightmode_init(){
+    // Define light-mode switch
     let Switch = document.getElementById('switch');
 
+    // Define light-mode cookie
     let lightmodeCookie = {
         set:function(key,value,time,path,secure=false) {
             let expires = new Date();
@@ -19,11 +21,13 @@ function lightmode_init(){
         }
     };
 
+    // Load light-mode if there is light-mode cookie
     if(lightmodeCookie.get() === 'true') {
         document.documentElement.setAttribute('data-theme', 'light');
         Switch.checked = true;
     }
 
+    // Switch between dark-mode and light-mode
     Switch.addEventListener('click', (event) => {
         if(Switch.checked) {
             document.documentElement.setAttribute('data-theme', 'light');
@@ -35,5 +39,5 @@ function lightmode_init(){
         }
     });
 }
-
+// Run script on page load up
 window.onload = lightmode_init;

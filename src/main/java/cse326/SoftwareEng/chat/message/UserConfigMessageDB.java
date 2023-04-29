@@ -1,7 +1,7 @@
 /*Configuration file for the user_message database*/
 
-package cse326.SoftwareEng.database.messageDB;
-import cse326.SoftwareEng.database.messageDB.UserMessageDB;
+package cse326.SoftwareEng.chat.message;
+import cse326.SoftwareEng.chat.message.UserMessageDB;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -18,7 +18,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "cse326.SoftwareEng.database.messageDB",
+@EnableJpaRepositories(basePackages = "cse326.SoftwareEng.chat.message",
         entityManagerFactoryRef = "userEntityManagerFactoryMessageDB",
         transactionManagerRef= "userTransactionManagerMessageDB")
 public class UserConfigMessageDB {

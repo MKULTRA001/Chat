@@ -1,8 +1,8 @@
-package cse326.SoftwareEng.database.authDB;
+package cse326.SoftwareEng.chat.auth;
 
-import cse326.SoftwareEng.database.EmailService;
-import cse326.SoftwareEng.database.userDB.User;
-import cse326.SoftwareEng.database.userDB.UserRepository;
+import cse326.SoftwareEng.chat.EmailService;
+import cse326.SoftwareEng.chat.user.User;
+import cse326.SoftwareEng.chat.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -20,13 +20,14 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
     @Autowired
     private EmailService emailService;
 
+    // After authentication, check or generate 2FA if needed.
     protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken authentication)
             throws AuthenticationException {
         super.additionalAuthenticationChecks(userDetails, authentication);
 
         User user = userRepo.findByUsername(userDetails.getUsername());
         if(user.getVerification()){
-            System.out.println("[2FA] "+ user.getUsername()+ " | "+ user.getCode_timestamp()+ " | "+user.getVerificationCode());
+            //System.out.println("[2FA] "+ user.getUsername()+ " | "+ user.getCode_timestamp()+ " | "+user.getVerificationCode());
             Date date = new Date();
             Timestamp timestamp = new Timestamp(date.getTime());
             if(user.getCode_timestamp() == null
@@ -39,12 +40,10 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
                 user.setVerificationCode(code);
                 userRepo.save(user);
                 emailService.sendCode(user);
-                System.out.println("[2fa] "+((CustomWebAuthenticationDetails) authentication.getDetails()).getVerificationCode());
-                System.out.println("[2FA] Generating Code "+code);
                 throw new InsufficientAuthenticationException("Verification is required");
             }
             else{
-                System.out.println("[2FA] Checking Code");
+                //System.out.println("[2FA] Checking Code");
                 int code = Integer.parseInt(((CustomWebAuthenticationDetails) authentication.getDetails()).getVerificationCode());
                 if(code != user.getVerificationCode()){
                     //System.out.println("[2FA] Invalid Code");

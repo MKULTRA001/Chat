@@ -1,4 +1,4 @@
-package cse326.SoftwareEng.database.messageDB;
+package cse326.SoftwareEng.chat.message;
 import java.io.Serializable;
 import java.util.Objects;
 

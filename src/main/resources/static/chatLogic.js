@@ -65,21 +65,24 @@ async function displayOldMessages(message, uname) {
                             const publicKey = await getRecipientsPublicKey(msgArray[0]);
                             console.log("67 publicKey: " + msgArray[0]);
                             const decryptedMessage = decryptDirectMessage(msgArray[1], privateKey, publicKey);
-                            appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? '#2fa4e7' : 'white');
+                            appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
                         }
                         else{
-                            appendMessage(`${msgArray[0]}: ${msgArray[1]}`, uname === msgArray[0] ? '#2fa4e7' : 'white');
+                            appendMessage(`${msgArray[0]}: ${msgArray[1]}`, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
                         }
                     }else{
-                        appendMessage(oldMessage, uname === msgArray[0] ? '#2fa4e7' : 'white');
+                        appendMessage(oldMessage, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
                     }
                 }
             }
         }
     }
+    // The chat window is scrolled to the bottom after a short delay.
+    setTimeout(function(){
+        let m = document.querySelector('.chat-body');
+        m.scrollTop =  1000;//m.scrollHeight;
+    }, 500);
 }
-
-
 
 // Retrieve metadata from a message. article is DOMStringMap of HTML message element
 // This element should be obtained by whatever edit selector is applied to that element and passed to the function
@@ -127,11 +130,6 @@ async function connect() {
         });
         // The send button is enabled.
         $("#send").prop("disabled", false);
-        // The chat window is scrolled to the bottom after a short delay.
-        setTimeout(function(){
-            let m = document.querySelector('.chat-body');
-            m.scrollTop =  1000;//m.scrollHeight;
-        }, 500);
     } else {
         // If the WebSocket connection is already open, a message is logged to the console.
         console.log("Could not connect: already connected");

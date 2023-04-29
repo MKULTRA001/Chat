@@ -1,4 +1,4 @@
-package cse326.SoftwareEng.database.messageDB;
+package cse326.SoftwareEng.chat.message;
 
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;

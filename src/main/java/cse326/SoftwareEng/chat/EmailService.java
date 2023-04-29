@@ -1,12 +1,13 @@
-package cse326.SoftwareEng.database;
+package cse326.SoftwareEng.chat;
 
-import cse326.SoftwareEng.database.userDB.User;
+import cse326.SoftwareEng.chat.user.User;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
+//Email service interface
 @Component
 public class EmailService {
     private JavaMailSender javaMailSender;
@@ -16,6 +17,7 @@ public class EmailService {
         this.javaMailSender = javaMailSender;
     }
 
+    // Sends email
     public void sendMail(String to, String subject, String text) {
         try{
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -31,6 +33,7 @@ public class EmailService {
         }
     }
 
+    // Email 2FA code
     public void sendCode(User user){
         String text = "<p>Hello " + user.getUsername() + ",</p>"
                 + "<p>Your verification code is"
@@ -39,6 +42,7 @@ public class EmailService {
         sendMail(user.getEmail(), "Chat Verification Code", text);
     }
 
+    // Email reset password link
     public void sendRest(User user, String URL){
         String text = "<p>Hello " + user.getUsername() + ",</p>"
                 + "<p>Your password reset link is"

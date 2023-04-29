@@ -5,7 +5,7 @@
  */
 
 
-package cse326.SoftwareEng.database.userDB;
+package cse326.SoftwareEng.chat.user;
 import jakarta.persistence.*;
 
 import java.util.Date;

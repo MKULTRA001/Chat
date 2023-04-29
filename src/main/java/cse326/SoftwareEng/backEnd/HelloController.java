@@ -1,6 +1,6 @@
 package cse326.SoftwareEng.backEnd;
 
-import cse326.SoftwareEng.database.messageDB.*;
+import cse326.SoftwareEng.chat.message.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

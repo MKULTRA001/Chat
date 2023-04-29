@@ -1,3 +1,4 @@
+/* Dark-mode color scheme */
 :root {
     --primary: #313338;
     --secondary: #2b2d31;
@@ -9,6 +10,7 @@
     --text: white;
 }
 
+/* Light-mode color scheme */
 [data-theme="light"]{
     --primary: #f5f5f5;
     --secondary: #ececec;

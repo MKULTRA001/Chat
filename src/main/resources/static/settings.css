@@ -4,13 +4,14 @@
 
 .nav-setting{
     background-color: var(--primary);
+    color: var(--accents-2);
     display: flex;
     list-style: none;
-    color: var(--accents-2);
     text-decoration: none;
 }
 
 .nav-setting a{
+    color: var(--accents-2);
     margin: 1rem 1.5rem;
     font-weight: 700;
     border-bottom: .25rem solid transparent;

@@ -1,4 +1,4 @@
-package cse326.SoftwareEng.database.userDB;
+package cse326.SoftwareEng.chat.user;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

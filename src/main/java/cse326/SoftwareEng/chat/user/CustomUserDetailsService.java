@@ -1,8 +1,8 @@
-package cse326.SoftwareEng.database.userDB;
+package cse326.SoftwareEng.chat.user;
 
-import cse326.SoftwareEng.database.userDB.CustomUserDetails;
-import cse326.SoftwareEng.database.userDB.User;
-import cse326.SoftwareEng.database.userDB.UserRepository;
+import cse326.SoftwareEng.chat.user.CustomUserDetails;
+import cse326.SoftwareEng.chat.user.User;
+import cse326.SoftwareEng.chat.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.UserDetails;

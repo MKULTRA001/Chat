@@ -3,7 +3,7 @@
 
 
 
-package cse326.SoftwareEng.database.messageDB;
+package cse326.SoftwareEng.chat.message;
 import jakarta.persistence.*;
 
 import java.util.Date;

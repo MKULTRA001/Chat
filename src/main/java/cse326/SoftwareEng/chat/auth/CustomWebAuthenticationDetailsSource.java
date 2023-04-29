@@ -1,4 +1,4 @@
-package cse326.SoftwareEng.database.authDB;
+package cse326.SoftwareEng.chat.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationDetailsSource;

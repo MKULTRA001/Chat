@@ -1,7 +1,7 @@
 /*Configuration file for the user_info database. Note this handles how Spring connects to the database*/
 
-package cse326.SoftwareEng.database.userDB;
-import cse326.SoftwareEng.database.userDB.User;
+package cse326.SoftwareEng.chat.user;
+import cse326.SoftwareEng.chat.user.User;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -18,7 +18,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "cse326.SoftwareEng.database.userDB")
+@EnableJpaRepositories(basePackages = "cse326.SoftwareEng.chat.user")
 public class UserConfig {
 
 
@@ -36,7 +36,7 @@ public class UserConfig {
             @Qualifier("dataSource") DataSource dataSource) {
         return builder
                 .dataSource(dataSource)
-                .packages("cse326.SoftwareEng.database.userDB")
+                .packages("cse326.SoftwareEng.chat.user")
                 .persistenceUnit("userPU")
                 .build();
     }
