@@ -3,17 +3,17 @@
 }
 
 h3{
-    color: #2fa4e7;
+    color: var(--accents-1);
 }
 
 .header{
     padding: .75rem;
     text-align: center;
-    border-bottom: 1px solid #495057;
+    border-bottom: 1px solid var(--accents-2);
 }
 
 .nav{
-    background-color: #1e1f22;
+    background-color: var(--tertary);
     position: relative;
     align-items: center;
     justify-content: space-between;
@@ -37,30 +37,30 @@ h3{
 }
 
 .brand{
-    color: #313338;
-    background-color: #2fa4e7;
+    color: var(--primary);
+    background-color: var(--accents-1);
     border-radius: .25rem;
     padding: .375rem;
 }
 
 .brand:hover{
-    color: white;
+    color: var(--text);
     transition: 0.2s;
 }
 
 .item{
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
-    color: #313338;
+    color: var(--primary);
 }
 
 .item:hover{
-    color: white;
+    color: var(--text);
     transition: 0.2s;
 }
 
 .sign_out{
-    color: #313338;
+    color: var(--primary);
 }
 
 .sign_out:hover{
@@ -76,14 +76,14 @@ h3{
 }
 
 .input-settings{
-    color: white;
-    background: #2d2d2d;
-    border: 1px solid #495057;
+    color: var(--text);
+    background: var(--accents-3);
+    border: 1px solid var(--accents-2);
     box-shadow: none !important;
 }
 
 .input-settings:focus{
-    color: white;
-    background: #2d2d2d;
-    border: 1px solid #495057;
+    color: var(--text);
+    background: var(--accents-3);
+    border: 1px solid var(--accents-2);
 }

@@ -36,7 +36,7 @@ public class EmailService {
                 + "<p>Your verification code is"
                 + "<p><b>" + user.getVerificationCode() + "</b></p>"
                 + "<p>Note: this verification code is set to expire in 5 minutes.</p>";
-            sendMail(user.getEmail(), "Chat Verification Code", text);
+        sendMail(user.getEmail(), "Chat Verification Code", text);
     }
 
     public void sendRest(User user, String URL){

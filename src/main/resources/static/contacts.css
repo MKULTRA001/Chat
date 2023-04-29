@@ -1,18 +1,18 @@
 .contacts{
-    background-color: #2b2d31;
+    background-color: var(--secondary);
 }
 
 .user-table{
-    color: white;
-    border: 1px solid #495057;
-    background: #2b2d31;
+    color: var(--text);
+    border: 1px solid var(--accents-2);
+    background: var(--secondary);
     text-align: center;
     width: 100%;
     border-collapse: collapse;
 
 }
 .user-table th{
-    background: #495057;
+    background: var(--accents-2);
     padding: 5px 0;
 }
 

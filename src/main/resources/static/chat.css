@@ -1,7 +1,6 @@
 .chat {
-    background-color: #313338;
+    background-color: var(--primary);
 }
-
 #conversation tr {
     line-height: 1;
     display: block;
@@ -11,8 +10,8 @@
     /* Add any styles you want for the 'channels' class */
     flex-grow: 0;
     width: 26.25rem;
-    border-right: 1px solid #495057;
-    background: #2b2d31;
+    border-right: 1px solid var(--accents-2);
+    background: var(--secondary);
 }
 
 .channels .header {
@@ -46,8 +45,8 @@
     text-align: left;
     padding: 0.5rem;
     margin-bottom: 0.5rem;
-    background-color: #495057;
-    color: white;
+    background-color: var(--accents-2);
+    color: var(--text);
     border: none;
     cursor: pointer;
     text-decoration: none;
@@ -56,10 +55,10 @@
 }
 
 .channels .channel-list .channel-button:hover {
-    background-color: #1787c7;
+    background-color: var(--accents-1);
 }
 .channels .channel-list .channel-button.selected {
-    background-color: #1787c7;
+    background-color: var(--accents-1);
 }
 
 .message{
@@ -83,7 +82,7 @@ table {
 .chat-body tr td {
     padding: 10px;
     margin: 0;
-    background-color: #2b2d31;
+    background-color: var(--secondary);
     width: auto;
 }
 
@@ -96,26 +95,26 @@ table {
 }
 
 .message-input{
-    color: white;
-    background: #2d2d2d;
-    border: #2d2d2d;
+    color: var(--text);
+    background: var(--accents-3);
+    border: var(--accents-3);
     border-top-left-radius: .25rem !important;
     border-bottom-left-radius: .25rem !important;
 }
 
 .message-input:focus{
-    color: white;
-    background: #2d2d2d;
+    color: var(--text);
+    background: var(--accents-3);
 }
 
 .message-btn {
-    color: white;
-    background: #2fa4e7;
+    color: var(--text);
+    background: var(--accents-1);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
 
 .message-btn:hover {
-    color: white;
-    background: #1476ae;
+    color: var(--text);
+    background: var(--accents-0);
 }

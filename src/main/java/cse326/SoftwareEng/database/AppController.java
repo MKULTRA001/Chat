@@ -1,20 +1,24 @@
 package cse326.SoftwareEng.database;
 
 import cse326.SoftwareEng.backEnd.HelloController;
+import cse326.SoftwareEng.database.authDB.CustomWebAuthenticationDetails;
 import cse326.SoftwareEng.database.messageDB.*;
 import cse326.SoftwareEng.database.userDB.User;
 import cse326.SoftwareEng.database.userDB.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.repository.query.Param;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -99,11 +103,33 @@ public class AppController {
     }
 
     @RequestMapping("/login")
-    public String login() {
+    public String login(Model model) {
         if (getAuth() == null || AnonymousAuthenticationToken.class.
                 isAssignableFrom(getAuth().getClass()))
             return "login";
         return "redirect:/chat";
+    }
+    //Add login error message and redirect 2FA if needed
+    @GetMapping("/login_error")
+    public String login_error(HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            AuthenticationException ex = (AuthenticationException) session
+                    .getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
+            if (ex != null) {
+                System.out.println("[Login] "+ex.getMessage());
+                if(ex.getMessage().equals("Bad credentials"))
+                    redirectAttributes.addFlashAttribute("error", "Invalid email or password.");
+                else{
+                    if(ex.getMessage().equals("Verification is required"))
+                        redirectAttributes.addFlashAttribute("message", "Check your email for your 2FA code.");
+                    else
+                        redirectAttributes.addFlashAttribute("error", "Invalid verification code.");
+                    return "redirect:/login?verify=true";
+                }
+            }
+        }
+        return "redirect:/login";
     }
 
     @RequestMapping("/contacts")
@@ -115,7 +141,7 @@ public class AppController {
 
     @GetMapping("/profile")
     public String profile(Model model) {
-        User user = userRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        User user = userRepo.findByUsername(getAuth().getName());
         model.addAttribute("id", user.getId());
         model.addAttribute("createdAt", user.getCreatedAt());
         return "profile";
@@ -169,7 +195,9 @@ public class AppController {
     }
 
     @GetMapping("/security")
-    public String security() {
+    public String security(Model model) {
+        User user = userRepo.findByUsername(getAuth().getName());
+        model.addAttribute("verification", user.getVerification());
         return "security";
     }
 

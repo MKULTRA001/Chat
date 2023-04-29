@@ -7,6 +7,7 @@
     <!-- Bootstrap CSS --><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
                                 integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <!-- Font Awesome Icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../static/theme.css">
     <link rel="stylesheet" href="../static/form.css">
     <script src="../static/handleLogin.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -20,18 +21,14 @@
     <section class="container">
             <div class="row d-flex justify-content-center">
                 <div class="col-xl-5 mt-5">
-                    <div th:if="${param.error}" th:utext="${session.SPRING_SECURITY_LAST_EXCEPTION.message}"
-                         class="alert alert-danger alert-dismissible d-flex align-items-center fade show">
+                    <div th:if="${error != null}" class="alert alert-danger d-flex ">
                         <i class="bi-exclamation-octagon-fill"></i>
-                        <strong class="mx-2">Error!</strong> Invalid username or password.</div>
-                    <div th:if="${param.verify}" class="alert alert-primary">
-                        <i class="bi-info-circle-fill"></i>
-                        <strong class="mx-2">Info!</strong> Check your email for your 2FA code.</div>
+                        <strong class="mx-2">Error!</strong>[[${error}]]
+                    </div>
                     <div th:if="${message != null}" class="alert alert-primary d-flex">
                         <i class="bi-info-circle-fill"></i>
                         <strong class="mx-2">Info!</strong>[[${message}]]
                     </div>
-                    <!--TODO reimplment message and eror-->
                     <div class="card mt-5">
                         <span class="header mb-3 "><i class="fa fa-comments-o icon"></i> Chat</span>
                         <div class="title mb-3">Login</div>
@@ -45,7 +42,7 @@
                                 <label class="label-text">Password</label>
                             </div>
                             <div th:if="${param.verify}" class="form-group mb-4">
-                                <input id="code" type="numeric" maxlength="6" placeholder=" " class="form-control form-control-lg box" >
+                                <input id="code" type="numeric" maxlength="6" placeholder=" " class="form-control form-control-lg shadow-none box" >
                                 <label class="label-text code-label" for="code">Code</label>
                             </div>
                             <div class="login-bar remember-me mb-3">

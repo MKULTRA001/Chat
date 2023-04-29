@@ -1,0 +1,24 @@
+:root {
+    --primary: #313338;
+    --secondary: #2b2d31;
+    --tertary: #1e1f22;
+    --accents-0: #2fa4e7;
+    --accents-1: #1787c7;
+    --accents-2: #495057;
+    --accents-3: #2d2d2d;
+    --text: white;
+}
+
+[data-theme="light"]{
+    --primary: #f5f5f5;
+    --secondary: #ececec;
+    --tertary: #d7d7d7;
+    --accents-0: #2fa4e7;
+    --accents-1: #1787c7;
+    --accents-2: #d8d8d8;
+    --accents-3: #ebebeb;
+    --text: #3f454e;
+}
+
+
+

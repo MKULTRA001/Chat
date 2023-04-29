@@ -1,33 +1,32 @@
 .settings{
-    background-color: #2b2d31;
+    background-color: var(--secondary);
 }
 
 .nav-setting{
-    background-color: #313338;
+    background-color: var(--primary);
     display: flex;
     list-style: none;
-    color: rgba(255, 255, 255, .5);
+    color: var(--accents-2);
     text-decoration: none;
 }
 
 .nav-setting a{
     margin: 1rem 1.5rem;
-    color: rgba(255, 255, 255, .5);
     font-weight: 700;
     border-bottom: .25rem solid transparent;
 }
 
 .nav-setting a:hover {
     text-decoration: none;
-    border-bottom-color: rgba(255, 255, 255, .25);
+    border-bottom-color: var(--accents-2);
 }
 
 .highlight{
-    color: white !important;
+    color: var(--text) !important;
 }
 
 .highlight:hover {
-    border-bottom-color: white !important;
+    border-bottom-color: var(--text) !important;
 }
 
 .container{
@@ -38,8 +37,9 @@
 
 .section-body{
     padding: 1.5em;
-    background-color: #313338;
-    color: white;
+    background-color: var(--primary);
+    color: var(--text);
+    border-radius: .25rem;
 }
 
 .ml-2, .mx-2 {

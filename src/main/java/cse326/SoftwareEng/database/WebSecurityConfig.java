@@ -37,7 +37,6 @@ public class WebSecurityConfig{
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        //DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         CustomAuthenticationProvider authProvider = new CustomAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
@@ -64,7 +63,8 @@ public class WebSecurityConfig{
                     .usernameParameter("username")
                     .loginPage("/login")
                     .defaultSuccessUrl("/chat", true)
-                    .failureHandler(loginFailureHandler)//.failureUrl("/login?error=true")
+                    //.failureHandler(loginFailureHandler)
+                    .failureUrl("/login_error")
                     .permitAll()
                     .and()
                     .rememberMe().userDetailsService(this.userDetailsService())
