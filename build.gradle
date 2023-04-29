@@ -41,5 +41,5 @@ test {
 	useJUnitPlatform()
 }
 springBoot {
-	mainClass = 'cse326.SoftwareEng.chat.ChatApplication'
+	mainClass = 'cse326.SoftwareEng.chat.SpringBootLoginApp'
 }
