@@ -20,4 +20,6 @@ public interface UserChannelRepository extends JpaRepository<UserChannel, UserCh
 
     @Query("SELECT uc1.channel FROM UserChannel uc1, UserChannel uc2 WHERE uc1.user.username = ?1 AND uc2.user.username = ?2 AND uc1.channel.channel_id = uc2.channel.channel_id AND uc1.channel.privateChannel = true")
     Channel findPrivateChannelByUsernames(String username1, String username2);
+    @Query("SELECT uc.encryptedSymmetricKey FROM UserChannel uc WHERE uc.user.username = ?1 AND uc.channel_id = ?2")
+    String findEncryptedSymmetricKeyByUsernameAndChannelId(String username, String channelId);
 }

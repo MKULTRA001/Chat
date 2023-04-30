@@ -10,6 +10,7 @@ public class TextMessage {
     private String time;
     private String messageId;
     private String channel;
+    private String iv;
     public TextMessage(){}
     public TextMessage(String message){
         this.message = message;
@@ -21,21 +22,21 @@ public class TextMessage {
         this.uname = uname;
     }
 
-    public TextMessage(String message, String uname, String time, String messageId, String uname2, String channel){
-        this.message = message;
-        this.uname = uname;
-        this.uname2 = uname2;
-        this.time = time;
-        this.messageId = messageId;
-        this.channel = channel;
-        System.out.println("Message: " + message + " uname: " + uname + " time: " + time + " messageId: " + messageId);
-    }
     public TextMessage(String message, String uname, String time, String messageId, String channel){
         this.message = message;
         this.uname = uname;
         this.time = time;
         this.messageId = messageId;
         this.channel = channel;
+        System.out.println("Message: " + message + " uname: " + uname + " time: " + time + " messageId: " + messageId + " channel: " + channel);
+    }
+    public TextMessage(String message, String uname, String time, String messageId, String channel, String iv){
+        this.message = message;
+        this.uname = uname;
+        this.time = time;
+        this.messageId = messageId;
+        this.channel = channel;
+        this.iv = iv;
         System.out.println("Message: " + message + " uname: " + uname + " time: " + time + " messageId: " + messageId + " channel: " + channel);
     }
     public String getMessage() {return message;}
@@ -47,4 +48,11 @@ public class TextMessage {
         return channel;
     }
 
+    public String getIv() {
+        return iv;
+    }
+
+    public void setIv(String iv) {
+        this.iv = iv;
+    }
 }

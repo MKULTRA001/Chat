@@ -10,4 +10,6 @@ public interface ChannelRepository extends JpaRepository<Channel, String> {
     Channel findByInviteLink(String inviteLink);
     @Query("SELECT c FROM Channel c WHERE c.channel_id = ?1")
     Channel findByChannelID(String channel_id);
+    @Query("SELECT c.created_by FROM Channel c WHERE c.channel_id = ?1")
+    String findCreatorByChannelId(String channel_id);
 }

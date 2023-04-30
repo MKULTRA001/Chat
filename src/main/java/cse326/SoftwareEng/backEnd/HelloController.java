@@ -99,11 +99,16 @@ public class HelloController{
         // Fetch old messages using the new method in MessageRepository
         List<Message> oldMessages = messageRepository.findAllMessagesByChannelIdSortedByTimeDesc(channelId);
         for (Message oldMessage : oldMessages) {
+            System.out.println("Old message: " + oldMessage);
             String[] messageContentParts = oldMessage.getMessage().split(":", 2);
             String messageContent = messageContentParts.length > 1 ? messageContentParts[1].trim() : "";
             response.append(oldMessage.getUser().getUsername())
                     .append(": ")
                     .append(messageContent)
+                    .append(":")
+                    .append(oldMessage.getIv())
+                    .append(":")
+                    .append("ENC")
                     .append("\n");
         }
         System.out.println(response.toString());
@@ -130,7 +135,10 @@ public class HelloController{
     @MessageMapping("/chat/private/{user1}/{user2}")
     @SendTo({"/chat/message/private/{user1}/{user2}"})
     public TextMessage directMessage(@DestinationVariable String user1, @DestinationVariable String user2, TextMessage message) {
+        System.out.println("message raw:" + message);
         System.out.println("Message in directMessage: " + message.getMessage());
+        System.out.println("message IV: " + message.getIv());
+        System.out.println("message Ch: " + message.getChannel());
         String username = message.getMessage().split(":")[0];
         UserMessageDB user = userRepositoryMessageDB.findByUsername(user1);
 
@@ -147,14 +155,13 @@ public class HelloController{
             System.out.println("PVC");
             return null; // Do not send the message if the private channel does not exist
         }
-
         Date date = new Date();
-        Message dbMessage = new Message(message.getMessage(), date, user, privateChannel.getChannel_id());
+        Message dbMessage = new Message(message.getMessage(), date, user, privateChannel.getChannel_id(), message.getIv());
         System.out.println("Before saving message: " + dbMessage);
         messageRepository.save(dbMessage);
         System.out.println("After saving message: " + dbMessage);
         String messageId = dbMessage.getMessage_id();
-        TextMessage message1 = new TextMessage(message.getMessage(), user1, date.toString(), messageId, privateChannel.getChannel_id());
+        TextMessage message1 = new TextMessage(message.getMessage(), user1, date.toString(), messageId, privateChannel.getChannel_id(), message.getIv());
         System.out.println("Message: "+ message1);
         return (message1);
     }
@@ -164,25 +171,34 @@ public class HelloController{
         String currentUser = currentUserName();
         String inviteLink = UUID.randomUUID().toString(); // Generate a unique invite link
         String channelName = (String) payload.get("channelName");
-        List<String> userList = (List<String>) payload.get("userList");
-        Channel channel = new Channel(channelName, currentUser, inviteLink, Boolean.FALSE);
-        UserMessageDB cUser = userRepositoryMessageDB.findByUsername(currentUser);
-        UserChannel userChannel = new UserChannel(cUser.getId(), channel.getChannel_id());
-        channelRepository.save(channel);
-        userChannelRepository.save(userChannel);
-        for (String username : userList) {
-            UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
-            if (user != null) {
-                UserChannel userChannel1 = new UserChannel(user.getId(), channel.getChannel_id());
-                userChannelRepository.save(userChannel1);
+        if (payload.get("userList") instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> userList = (List<String>) payload.get("userList");
+            Channel channel = new Channel(channelName, currentUser, inviteLink, Boolean.FALSE);
+            UserMessageDB cUser = userRepositoryMessageDB.findByUsername(currentUser);
+            UserChannel userChannel = new UserChannel(cUser.getId(), channel.getChannel_id());
+            channelRepository.save(channel);
+            userChannelRepository.save(userChannel);
+            for (String username : userList) {
+                UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
+                if (user != null) {
+                    UserChannel userChannel1 = new UserChannel(user.getId(), channel.getChannel_id());
+                    userChannelRepository.save(userChannel1);
+                }
             }
+            Map<String, String> response = new HashMap<>();
+            response.put("inviteLink", inviteLink);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
-        Map<String, String> response = new HashMap<>();
-        response.put("inviteLink", inviteLink);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        else{
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
     @PostMapping("/createPrivateChannel/{user1}/{user2}")
-    public ResponseEntity<String> createPrivateChannel(@PathVariable String user1, @PathVariable String user2) {
+    public ResponseEntity<String> createPrivateChannel(@PathVariable String user1, @PathVariable String user2, @RequestBody Map<String, String> payload) {
+        String user1EncryptedSymmetricKey = payload.get("user1EncryptedSymmetricKey");
+        String user2EncryptedSymmetricKey = payload.get("user2EncryptedSymmetricKey");
+
         String channelName = "DM:" + user1 + " and " + user2;
         Channel channel = new Channel(channelName, user1, null, Boolean.TRUE);
         channelRepository.save(channel);
@@ -190,9 +206,26 @@ public class HelloController{
         UserMessageDB users2 = userRepositoryMessageDB.findByUsername(user2);
         UserChannel userChannel1 = new UserChannel(users1.getId(), channel.getChannel_id());
         UserChannel userChannel2 = new UserChannel(users2.getId(), channel.getChannel_id());
+
+        // Set encrypted symmetric keys for user channels
+        userChannel1.setEncryptedSymmetricKey(user1EncryptedSymmetricKey);
+        userChannel2.setEncryptedSymmetricKey(user2EncryptedSymmetricKey);
+
         userChannelRepository.save(userChannel1);
         userChannelRepository.save(userChannel2);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/getEncryptedSymmetricKey/{username}/{channel_id}")
+    public ResponseEntity<String> getEncryptedSymmetricKey(@PathVariable String channel_id, @PathVariable String username) {
+        System.out.println("getEncryptedSymmetricKey Channel ID: " + channel_id + " Username: " + username);
+        String encryptedSymmetricKey = userChannelRepository.findEncryptedSymmetricKeyByUsernameAndChannelId(username, channel_id);
+        System.out.println("getEncryptedSymmetricKey encryptedSymmetricKey: " + encryptedSymmetricKey);
+        if (encryptedSymmetricKey != null) {
+            return new ResponseEntity<>(encryptedSymmetricKey, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
 
@@ -269,5 +302,11 @@ public class HelloController{
         System.out.println("getChannelUsers: " + usernames);
         return usernames;
     }
-
+    @GetMapping("/getChannelCreator/{channelId}")
+    @ResponseBody
+    public String getChannelCreator(@PathVariable String channelId) {
+        String creatorUsername = channelRepository.findCreatorByChannelId(channelId);
+        System.out.println("getChannelCreator: " + creatorUsername);
+        return creatorUsername;
+    }
 }

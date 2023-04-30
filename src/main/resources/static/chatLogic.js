@@ -40,13 +40,14 @@ function isEncryptedMessage(message) {
     }
 }
 // This function is used to display old messages in the chat window.
-async function displayOldMessages(message, uname) {
+async function displayOldMessages(message, uname, currentChannelId) {
     // The response message is parsed as JSON
     const response = JSON.parse(message.body);
     // The old messages are then extracted and split based on newlines
     const oldMessages = response.message.split('\n');
     console.log("old messages: " + oldMessages);
     const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+    const publicKey = await getRecipientsPublicKey(await getChannelCreator(currentChannelId));
     // If the first message in the old messages array starts with the current user's name followed by a colon,
     // then the chat window is cleared before displaying the old messages.
     if (oldMessages[0].startsWith(uname + ":")) {
@@ -60,17 +61,21 @@ async function displayOldMessages(message, uname) {
                 // the message is appended to the chat window using the appendMessage function with the color
                 // of the sender's name being green and the color of the recipient's name being red.
                 if (response.recipient === uname || !response.recipient) {
-                    if (isEncryptedMessage(msgArray[1].trim())) {
-                        if(msgArray[0] !== uname) {
-                            const publicKey = await getRecipientsPublicKey(msgArray[0]);
-                            console.log("67 publicKey: " + msgArray[0]);
-                            const decryptedMessage = decryptDirectMessage(msgArray[1], privateKey, publicKey);
-                            appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
-                        }
-                        else{
-                            appendMessage(`${msgArray[0]}: ${msgArray[1]}`, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
-                        }
-                    }else{
+                    if (msgArray[3] === "ENC") {
+                        const encryptedKey = await getEncryptedKey(uname, currentChannelId);
+                        const symKey = await KeyDecryption(encryptedKey, publicKey, privateKey);
+                        importSymmetricKey(symKey).then(async (importedKey) => {
+                            console.log('Imported symmetric key:', importedKey);
+                            const decryptedMessage = await decryptDirectMessage(msgArray[2], msgArray[1], importedKey);
+                            if(msgArray[0] !== uname) {
+                                appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
+                            }
+                            else{
+                                appendMessage(`${msgArray[0]}: ${decryptedMessage}`, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
+                            }
+                        });
+                    }
+                    else{
                         appendMessage(oldMessage, uname === msgArray[0] ? 'var(--accents-0)' : 'var(--text)');
                     }
                 }
@@ -191,9 +196,47 @@ function send(message) {
         console.log("No channel selected");
     }
 }
+async function getEncryptedKey(username, channelId) {
+    try {
+        const response = await fetch(`/getEncryptedSymmetricKey/${username}/${channelId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        });
+
+        if (response.ok) {
+            const encryptedSymmetricKey = await response.text();
+            return encryptedSymmetricKey;
+        } else {
+            console.error(`Error getting encrypted symmetric key: ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching encrypted symmetric key:', error);
+        return null;
+    }
+}
+async function getChannelCreator(channelId) {
+    try {
+        const response = await fetch(`/getChannelCreator/${channelId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const creatorUsername = await response.text();
+        console.log("Channel creator:", creatorUsername);
+        return creatorUsername;
+    } catch (error) {
+        console.error("Error fetching channel creator:", error);
+    }
+}
+
 async function sendDirectMessage(currentChannelId, message) {
     const users = await getChannelUsers(currentChannelId);
     const uname = await getUname();
+    console.log("Send DM: " + uname);
+    const encryptedKey = await getEncryptedKey(uname, currentChannelId);
+    console.log(encryptedKey)
     console.log("Current Channel ID: " + currentChannelId);
     console.log("Users: " + users);
     // Check if the list has 2 users
@@ -202,20 +245,25 @@ async function sendDirectMessage(currentChannelId, message) {
         const target = users.find(user => user !== uname);
         if (target) {
             const destination = `/app/chat/private/${uname}/${target}`;
-            const publicKey = await getRecipientsPublicKey(target);
+            const publicKey = await getRecipientsPublicKey(await getChannelCreator(currentChannelId));
             const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
-            // Encrypt the message
-            const encryptedMessage = await directMessageEncryption(message, publicKey, privateKey);
-
-            // Print the encrypted message
-            console.log("Encrypted message:", encryptedMessage);
-            //
-          //  const encryptedMessage = await directMessageEncryption(privateKey, publicKey, message);
-           // console.log("Encrypted Message: " + encryptedMessage);
-            stompClient.send(destination, {}, JSON.stringify({
-                'message': `${uname}: ${encryptedMessage}`,
-                'channel': currentChannelId
-            }));
+            const symKey = await KeyDecryption(encryptedKey, publicKey, privateKey);
+            importSymmetricKey(symKey).then(async (importedKey) => {
+                console.log('Imported symmetric key:', importedKey);
+                // Encrypt the message
+                console.log("Message: " + message);
+                const encryptedMessage = await directMessageEncryption(message, importedKey);
+                // Print the encrypted message
+                console.log("Encrypted message:", encryptedMessage);
+                //
+                //  const encryptedMessage = await directMessageEncryption(privateKey, publicKey, message);
+                // console.log("Encrypted Message: " + encryptedMessage);
+                stompClient.send(destination, {}, JSON.stringify({
+                    'message': `${uname}: ${encryptedMessage.encryptedData}`,
+                    'channel': currentChannelId,
+                    'iv': encryptedMessage.iv,
+                }));
+            });
         } else {
             console.error("Error: Target user not found.");
         }
@@ -264,15 +312,30 @@ async function createChannel(channelName, userList) {
 }
 async function createPrivateChannel(user2) {
     const user1 = await getUname();
-    // A POST request is sent to the server with the channel name and user list in the request body.
+    console.log(user2);
+    // Generate a symmetric key
+    const symmetricKey = await generateSymmetricKey();
+
+    // Get user1's private key and public key, and user2's public key
+    const user1PrivateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+    const user1PublicKey = await getRecipientsPublicKey(user1);
+    const user2PublicKey = await getRecipientsPublicKey(user2);
+
+    // Encrypt the symmetric key with user1's private key and user2's public key
+    const user1EncryptedSymmetricKey = await KeyEncryption(symmetricKey, user1PublicKey, user1PrivateKey);
+    const user2EncryptedSymmetricKey = await KeyEncryption(symmetricKey, user2PublicKey, user1PrivateKey);
+
+    // A POST request is sent to the server with the encrypted symmetric keys in the request body.
     const response = await fetch(`/createPrivateChannel/${user1}/${user2}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ user1, user2 })
+        body: JSON.stringify({ user1EncryptedSymmetricKey, user2EncryptedSymmetricKey })
     });
 }
+
+
 // This async function sends a POST request to the server to join a channel with the specified invite link.
 async function joinChannel(inviteLink) {
     // A POST request is sent to the server with the invite link in the request body.
@@ -351,8 +414,9 @@ async function subscribeToChannel(channelId) {
                 const privateChannelName = $("#userChannels button[data-channel-id='" + channelId + "']").text();
                 $("#channel-name").text(privateChannelName);
                 const [_, user1, user2] = privateChannelName.match(/DM:(\w+) and (\w+)/);
-                Subscription1 = await stompClient.subscribe(`/chat/login/${channelId}`, function (message) {
-                    displayOldMessages(message, uname);
+                Subscription1 = await stompClient.subscribe(`/chat/login/${channelId}`, async function (message) {
+                    await displayOldMessages(message, uname, currentChannelId);
+                    await Subscription1.unsubscribe();
                 });
                 // Subscribe to messages from user1 to user2
                 Subscription2 = await stompClient.subscribe(`/chat/message/private/${user1}/${user2}`, async function (message) {
@@ -362,8 +426,12 @@ async function subscribeToChannel(channelId) {
                     if ($("#text tr[data-id='" + messageId + "']").length === 0) {
                         const msg = await handlePrivateMessage(message, uname,  JSON.parse(message.body).uname);
                         console.log(msg)
+                        if (msg.uname === uname) {
+                            appendMessage2(msg, 'green');
+                        } else {
                             appendMessage2(msg, 'red');
                         }
+                    }
                 });
                 Subscription3 = await stompClient.subscribe(`/chat/message/private/${user2}/${user1}`, async function (message) {
                     console.log("2user1: " + user1);
@@ -372,13 +440,17 @@ async function subscribeToChannel(channelId) {
                     if ($("#text tr[data-id='" + messageId + "']").length === 0) {
                         const msg = await handlePrivateMessage(message, uname,  JSON.parse(message.body).uname);
                         console.log(msg)
-                        appendMessage2(msg, 'red');
+                        if (msg.uname === uname) {
+                            appendMessage2(msg, 'green');
+                        } else {
+                            appendMessage2(msg, 'red');
+                        }
                     }
                 });
                 stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({'message': uname}));
             }else {
                 Subscription1= await stompClient.subscribe(`/chat/login/${channelId}`, function (message) {
-                    displayOldMessages(message, uname);
+                    displayOldMessages(message, uname, currentChannelId);
                 });
                 Subscription2 = await stompClient.subscribe(`/chat/message/${channelId}`, function (message) {
                     const msg = JSON.parse(message.body);
@@ -398,31 +470,36 @@ async function subscribeToChannel(channelId) {
 }
 
 async function handlePrivateMessage(message, uname, target) {
-    const publicKey = await getRecipientsPublicKey(target);
+    const encryptedKey = await getEncryptedKey(uname, currentChannelId);
+    const publicKey = await getRecipientsPublicKey(await getChannelCreator(currentChannelId));
     const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
-
-    // Check if the message has already been displayed
+    const symKey = await KeyDecryption(encryptedKey, publicKey, privateKey);
     const messageId = JSON.parse(message.body).messageId;
-    if ($("#text tr[data-id='" + messageId + "']").length === 0) {
-        const msg = JSON.parse(message.body);
+    const iv = JSON.parse(message.body).iv;
+    return importSymmetricKey(symKey).then(async (importedKey) => {
+        console.log('Imported symmetric key:', importedKey);
+        // Check if the message has already been displayed
+        if ($("#text tr[data-id='" + messageId + "']").length === 0) {
+            const msg = JSON.parse(message.body);
+            console.log("Encrypted message:", msg.message);
+            // Extract the encrypted message from the msg.message property
+            const encryptedMessage = msg.message.split(': ')[1];
 
-        // Extract the encrypted message from the msg.message property
-        const encryptedMessage = msg.message.split(': ')[1];
+            try {
+                const decryptedMessage = await decryptDirectMessage(iv, encryptedMessage,importedKey);
+                console.log("Decrypted message:", decryptedMessage);
 
-        try {
-            const decryptedMessage = decryptDirectMessage(encryptedMessage, privateKey, publicKey);
-            console.log("Decrypted message:", decryptedMessage);
+                // Update the msg.message property with the decrypted message
+                msg.message = `${msg.uname}: ${decryptedMessage}`;
 
-            // Update the msg.message property with the decrypted message
-            msg.message = `${msg.uname}: ${decryptedMessage}`;
+                console.log(msg);
 
-            console.log(msg);
-
-            return msg;
-        } catch (error) {
-            console.error("Error:", error.message);
+                return msg;
+            } catch (error) {
+                console.error("Error:", error.message);
+            }
         }
-    }
+    });
 }
 
 
@@ -529,43 +606,140 @@ async function getRecipientsPublicKey(username) {
     const publicKeyBase64 = await response.text();
     return new Uint8Array(atob(publicKeyBase64).split('').map(char => char.charCodeAt(0)));
 }
-async function directMessageEncryption(message, recipientPublicKey, senderPrivateKey) {
-    console.log('directMessageEncryption: ', message, recipientPublicKey, senderPrivateKey)
+async function importSymmetricKey(rawKey) {
+    return await window.crypto.subtle.importKey(
+        'raw',
+        rawKey.slice(32), // Use the second half of the decrypted key
+        {name: 'AES-GCM', length: 256},
+        true,
+        ['encrypt', 'decrypt']
+    );
+}
+async function KeyEncryption(symmetricKey, recipientPublicKey, senderPrivateKey) {
+    console.log('key encryption: ', symmetricKey, recipientPublicKey, senderPrivateKey)
     const encoder = new TextEncoder();
-    const messageUint8Array = encoder.encode(message);
+    const arrayBuffer = await crypto.subtle.exportKey('raw', symmetricKey);
+    const keyUint8Array = new Uint8Array(arrayBuffer);
 
     const nonce = nacl.randomBytes(nacl.box.nonceLength);
 
-    const encryptedMessage = nacl.box(messageUint8Array, nonce, recipientPublicKey, senderPrivateKey);
+    const encryptedMessage = nacl.box(keyUint8Array, nonce, recipientPublicKey, senderPrivateKey);
 
     const encryptedMessageWithNonce = new Uint8Array(nacl.box.nonceLength + encryptedMessage.length);
     encryptedMessageWithNonce.set(nonce);
     encryptedMessageWithNonce.set(encryptedMessage, nonce.length);
 
     const uint8ToString = (buf) => String.fromCharCode.apply(null, buf);
-    const encryptedMessageBase64 = btoa(uint8ToString(encryptedMessageWithNonce));
-
-    return encryptedMessageBase64;
+    return btoa(uint8ToString(encryptedMessageWithNonce));
 }
-
-function decryptDirectMessage(message, recipientPrivateKey, senderPublicKey) {
-    console.log('decryptDirectMessage: ', message, recipientPrivateKey, senderPublicKey)
+async function KeyDecryption(encryptedSymmetricKey, senderPublicKey, recipientPrivateKey) {
     const stringToUint8 = (str) => new Uint8Array(str.split('').map((char) => char.charCodeAt(0)));
-    const encryptedMessageWithNonce = stringToUint8(atob(message));
-
+    const encryptedMessageWithNonce = stringToUint8(atob(encryptedSymmetricKey));
     const nonce = encryptedMessageWithNonce.slice(0, nacl.box.nonceLength);
     const encryptedMessage = encryptedMessageWithNonce.slice(nacl.box.nonceLength);
 
-    const decryptedMessageUint8Array = nacl.box.open(encryptedMessage, nonce, senderPublicKey, recipientPrivateKey);
+    const decryptedUint8Array = nacl.box.open(encryptedMessage, nonce, senderPublicKey, recipientPrivateKey);
 
-    if (!decryptedMessageUint8Array) {
-        throw new Error('Decryption failed');
+    if (!decryptedUint8Array) {
+        throw new Error("Decryption failed");
     }
 
-    const decoder = new TextDecoder();
-    const decryptedMessage = decoder.decode(decryptedMessageUint8Array);
+    return decryptedUint8Array.buffer;
+}
+async function directMessageEncryption(message, symKey) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(message);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
 
-    return decryptedMessage;
+    const encryptedData = await crypto.subtle.encrypt(
+        {
+            name: "AES-GCM",
+            iv: iv,
+        },
+        symKey,
+        data
+    );
+    // Convert ArrayBuffer to Base64
+    const arrayBufferToBase64 = (buffer) => {
+        const binary = String.fromCharCode.apply(null, new Uint8Array(buffer));
+        return btoa(binary);
+    };
+
+    const base64Iv = arrayBufferToBase64(iv.buffer);
+    const base64EncryptedData = arrayBufferToBase64(encryptedData);
+
+    return { iv: base64Iv, encryptedData: base64EncryptedData };
+}
+
+async function decryptDirectMessage(base64Iv, base64EncryptedData, symKey) {
+    // Convert Base64 to ArrayBuffer
+    const base64ToArrayBuffer = (base64) => {
+        const binary = atob(base64);
+        const buffer = new ArrayBuffer(binary.length);
+        const view = new Uint8Array(buffer);
+        for (let i = 0; i < binary.length; i++) {
+            view[i] = binary.charCodeAt(i);
+        }
+        return buffer;
+    };
+
+    const ivArrayBuffer = base64ToArrayBuffer(base64Iv);
+    const encryptedDataArrayBuffer = base64ToArrayBuffer(base64EncryptedData);
+
+    const decryptedData = await crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv: new Uint8Array(ivArrayBuffer),
+        },
+        symKey,
+        encryptedDataArrayBuffer
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decryptedData);
+}
+
+async function generateSymmetricKey() {
+    return await crypto.subtle.generateKey(
+        {
+            name: "AES-GCM",
+            length: 256,
+        },
+        true,
+        ["encrypt", "decrypt"]
+    );
+}
+
+async function encryptMessage(key, message) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(message);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    const encryptedData = await crypto.subtle.encrypt(
+        {
+            name: "AES-GCM",
+            iv: iv,
+        },
+        key,
+        data
+    );
+
+    return { iv, encryptedData };
+}
+
+async function decryptMessage(key, iv, encryptedData) {
+    const decryptedData = await crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv: iv,
+        },
+        key,
+        encryptedData
+    );
+
+    const decoder = new TextDecoder();
+    const message = decoder.decode(decryptedData);
+    return message;
 }
 
 function loadTweetNaCl(callback) {
@@ -582,31 +756,6 @@ function loadTweetNaCl(callback) {
 // A function that runs when the page is loaded
 $(async function () {
     loadTweetNaCl();
-    //test
-        // Generate key pairs for sender and recipient
-        const senderKeyPair = nacl.box.keyPair();
-        const recipientKeyPair = nacl.box.keyPair();
-        console.log("Sender key pair:", senderKeyPair);
-        console.log("Recipient key pair:", recipientKeyPair);
-        // Original message
-        const message = "Hello, this is a secret message!";
-
-        // Encrypt the message
-        const encryptedMessage = await directMessageEncryption(message, recipientKeyPair.publicKey, senderKeyPair.secretKey);
-
-        // Print the encrypted message
-        console.log("Encrypted message:", encryptedMessage);
-
-        // Decrypt the message
-        try {
-            const decryptedMessage = decryptDirectMessage(encryptedMessage, recipientKeyPair.secretKey, senderKeyPair.publicKey);
-            console.log("Decrypted message:", decryptedMessage);
-        } catch (error) {
-            console.error("Error:", error.message);
-        }
-
-
-
     const keyA = await loadKeyFromLocalStorage("keyA", 'AES');
     const keyB = await loadKeyFromLocalStorage("keyB", 'AES');
     const privateKey = loadCurve25519KeyFromLocalStorage("privateKey");

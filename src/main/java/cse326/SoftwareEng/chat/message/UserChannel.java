@@ -12,6 +12,8 @@ public class UserChannel {
     @Id
     @Column(name = "channel_id")
     private String channel_id;
+    @Column(name = "encrypted_symmetric_key")
+    private String encryptedSymmetricKey;
 
     @ManyToOne
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
@@ -24,6 +26,11 @@ public class UserChannel {
     public UserChannel(String user_id, String channel_id) {
         this.user_id = user_id;
         this.channel_id = channel_id;
+    }
+    public UserChannel(String user_id, String channel_id, String encrypted_symmetric_key) {
+        this.user_id = user_id;
+        this.channel_id = channel_id;
+        this.encryptedSymmetricKey = encrypted_symmetric_key;
     }
 
     public UserChannel() {
@@ -57,6 +64,14 @@ public class UserChannel {
     public Channel getChannel() {
         return channel;
     }
+    public String getEncryptedSymmetricKey() {
+        return encryptedSymmetricKey;
+    }
+
+    public void setEncryptedSymmetricKey(String encryptedSymmetricKey) {
+        this.encryptedSymmetricKey = encryptedSymmetricKey;
+    }
+
 
     public void setChannel(Channel channel) {
         this.channel = channel;

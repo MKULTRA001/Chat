@@ -30,6 +30,8 @@ public class Message {
     private UserMessageDB user;
     @Column(name = "channel_id")
     private String channel_id;
+    @Column(name = "iv")
+    private String iv;
 
     @ManyToOne
     @JoinColumn(name = "channel_id", insertable = false, updatable = false)
@@ -42,6 +44,14 @@ public class Message {
         this.sendTime = sendTime;
         this.user = user;
         this.channel_id = channel_id;
+    }
+    public Message(String message, Date sendTime, UserMessageDB user, String channel_id, String iv) {
+        this.message_id = UUID.randomUUID().toString();
+        this.message = message;
+        this.sendTime = sendTime;
+        this.user = user;
+        this.channel_id = channel_id;
+        this.iv = iv;
     }
     /*Default constructor for Message class*/
     public Message() {
@@ -99,6 +109,14 @@ public class Message {
     public void setChannel(Channel channel) {
         this.channel = channel;
     }
+    public String getIv() {
+        return iv;
+    }
+
+    public void setIv(String iv) {
+        this.iv = iv;
+    }
+
     @Override
     public String toString() {
         return "Message{" +
@@ -107,6 +125,7 @@ public class Message {
                 ", sendTime=" + sendTime +
                 ", user=" + user.getUsername() +
                 ", channel_id='" + channel_id + '\'' +
+                ", iv='" + iv + '\'' +
                 '}';
     }
 }
