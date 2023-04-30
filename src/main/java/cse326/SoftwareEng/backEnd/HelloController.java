@@ -60,6 +60,7 @@ public class HelloController {
     @MessageMapping("/chat/{channelId}")
     @SendTo("/chat/message/{channelId}")
     public TextMessage helloWorld(@DestinationVariable String channelId, TextMessage message) {
+        //ISSUE IS HERE WITH SAVING THE MESSAGE AND IV
         String username = message.getMessage().split(":")[0];
         UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
         UserChannel userChannel = userChannelRepository.findByUserIdAndChannelId(user.getId(), channelId);
@@ -67,11 +68,11 @@ public class HelloController {
             return null; // Do not send the message if the user is not in the channel or the channel field is null
         }
         Date date = new Date();
-        Message dbMessage = new Message(message.getMessage(), date, user, message.getChannel());
+        Message dbMessage = new Message(message.getMessage(), date, user, message.getChannel(), message.getIv());
         messageRepository.save(dbMessage);
         String messageId = dbMessage.getMessage_id();
         String channel = message.getChannel();
-        TextMessage message1 = new TextMessage(message.getMessage(), username, date.toString(), messageId, channel);
+        TextMessage message1 = new TextMessage(message.getMessage(), username, date.toString(), messageId, channel, message.getIv());
         System.out.println(message1);
         return message1;
     }
@@ -189,9 +190,11 @@ public class HelloController {
         String currentUser = currentUserName();
         String inviteLink = UUID.randomUUID().toString(); // Generate a unique invite link
         String channelName = (String) payload.get("channelName");
-        if (payload.get("userList") instanceof List) {
+        if (payload.get("userList") instanceof List && payload.get("encryptedKeys") instanceof Map) {
             @SuppressWarnings("unchecked")
             List<String> userList = (List<String>) payload.get("userList");
+            @SuppressWarnings("unchecked")
+            Map<String, String> encryptedKeys = (Map<String, String>) payload.get("encryptedKeys");
             Channel channel = new Channel(channelName, currentUser, inviteLink, Boolean.FALSE);
             UserMessageDB cUser = userRepositoryMessageDB.findByUsername(currentUser);
             UserChannel userChannel = new UserChannel(cUser.getId(), channel.getChannel_id());
@@ -201,17 +204,20 @@ public class HelloController {
                 UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
                 if (user != null) {
                     UserChannel userChannel1 = new UserChannel(user.getId(), channel.getChannel_id());
+                    // Set the encrypted symmetric key for the user channel
+                    userChannel1.setEncryptedSymmetricKey(encryptedKeys.get(username));
+                    System.out.println("Encrypted symmetric key: " + encryptedKeys.get(username) + " for user: " + username + "user: " + user.getUsername());
                     userChannelRepository.save(userChannel1);
                 }
             }
             Map<String, String> response = new HashMap<>();
             response.put("inviteLink", inviteLink);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        }
-        else{
+        } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
+
     @PostMapping("/createPrivateChannel/{user1}/{user2}")
     public ResponseEntity<String> createPrivateChannel(@PathVariable String user1, @PathVariable String user2, @RequestBody Map<String, String> payload) {
         String user1EncryptedSymmetricKey = payload.get("user1EncryptedSymmetricKey");

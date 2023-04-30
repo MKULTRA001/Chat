@@ -266,17 +266,14 @@ async function sendChannelMessage(currentChannelId, message) {
 
     // Check if the channel has a symmetric key for end-to-end encryption
     const encryptedKey = await getEncryptedKey(uname, currentChannelId);
-
     if (encryptedKey) {
         const publicKey = await getRecipientsPublicKey(await getChannelCreator(currentChannelId));
         const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
         const symKey = await KeyDecryption(encryptedKey, publicKey, privateKey);
-
-        // If the channel has a symmetric key, use it for encryption
         importSymmetricKey(symKey).then(async (importedKey) => {
+            const users = await getChannelUsers(currentChannelId);
             console.log('Imported symmetric key:', importedKey);
-
-            // Encrypt the message
+                        // Encrypt the message
             console.log("Message: " + message);
             const encryptedMessage = await directMessageEncryption(message, importedKey);
             console.log("Encrypted message:", encryptedMessage);
@@ -321,20 +318,33 @@ function name() {
 
 // This async function sends a POST request to the server to create a new channel with the specified name and user list.
 async function createChannel(channelName, userList) {
-    // A POST request is sent to the server with the channel name and user list in the request body.
+    const uname = await getUname();
+    const symmetricKey = await generateSymmetricKey();
+    const userPrivateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+    const encryptedKeys = {};
+
+    for (const user of userList) {
+            const userPublicKey = await getRecipientsPublicKey(user);
+            encryptedKeys[user] = await KeyEncryption(symmetricKey, userPublicKey, userPrivateKey);
+    }
+    console.log(encryptedKeys);
+    // A POST request is sent to the server with the channel name, user list, and encrypted keys in the request body.
     const response = await fetch('/createChannel', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ channelName, userList })
+        body: JSON.stringify({ channelName, userList, encryptedKeys })
     });
+
     // The response from the server is parsed as JSON and logged to the console.
     const data = await response.json();
     console.log(data);
+
     // The invite link for the new channel is returned.
     return data.inviteLink;
 }
+
 async function createPrivateChannel(user2) {
     const user1 = await getUname();
     console.log(user2);
@@ -460,7 +470,7 @@ async function subscribeToChannel(channelId) {
                     console.log("user2: " + user2);
                     const messageId = JSON.parse(message.body).messageId;
                     if ($("#text tr[data-id='" + messageId + "']").length === 0) {
-                        const msg = await handlePrivateMessage(message, uname,  JSON.parse(message.body).uname);
+                        const msg = await handleMessage(message, uname);
                         console.log(msg)
                         if (msg.uname === uname) {
                             appendMessage2(msg, 'green');
@@ -475,7 +485,7 @@ async function subscribeToChannel(channelId) {
                     console.log("user2: " + user2);
                     const messageId = JSON.parse(message.body).messageId;
                     if ($("#text tr[data-id='" + messageId + "']").length === 0) {
-                        const msg = await handlePrivateMessage(message, uname,  JSON.parse(message.body).uname);
+                        const msg = await handleMessage(message, uname);
                         console.log(msg)
                         if (msg.uname === uname) {
                             appendMessage2(msg, 'green');
@@ -495,8 +505,10 @@ async function subscribeToChannel(channelId) {
                     await Subscription1.unsubscribe();
                 });
                 subscriptions.push(Subscription1);
-                Subscription2 = await stompClient.subscribe(`/chat/message/${channelId}`, function (message) {
-                    const msg = JSON.parse(message.body);
+                Subscription2 = await stompClient.subscribe(`/chat/message/${channelId}`, async function (message) {
+                    const messageId = JSON.parse(message.body).messageId;
+                    const msg = await handleMessage(message, uname);
+                    console.log(msg)
                     if (msg.uname === uname) {
                         appendMessage2(msg, 'green');
                     } else {
@@ -515,7 +527,7 @@ async function subscribeToChannel(channelId) {
     }
 }
 
-async function handlePrivateMessage(message, uname, target) {
+async function handleMessage(message, uname) {
     const encryptedKey = await getEncryptedKey(uname, currentChannelId);
     const publicKey = await getRecipientsPublicKey(await getChannelCreator(currentChannelId));
     const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
@@ -547,8 +559,6 @@ async function handlePrivateMessage(message, uname, target) {
         }
     });
 }
-
-
 
 
 // This function clears all rows from the chat window.
@@ -798,13 +808,16 @@ function loadTweetNaCl(callback) {
     document.head.appendChild(script);
 }
 function promptUser(users, channelType) {
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
         const select = document.createElement("select");
+        const uname = await getUname();
         users.forEach(username => { // Loop through the usernames
-            const option = document.createElement("option");
-            option.text = username; // Use the username string as the option text
-            option.value = username;
-            select.add(option);
+            if (username !== uname) { // Don't add the current user to the list
+                const option = document.createElement("option");
+                option.text = username; // Use the username string as the option text
+                option.value = username;
+                select.add(option);
+            }
         });
         select.multiple = channelType !== 'DM';
         const submit = document.createElement("button");
@@ -850,7 +863,9 @@ $(async function () {
         if (channelName) {
             const selectedUsers = await promptUser(users, 'channel');
             if (selectedUsers) {
-                const response = await createChannel(channelName, [selectedUsers]);
+                const uname = await getUname();
+                selectedUsers.push(uname);
+                const response = await createChannel(channelName, selectedUsers);
                 console.log(response);
                 await fetchChannels();
             }
