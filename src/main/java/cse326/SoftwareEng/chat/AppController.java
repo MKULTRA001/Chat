@@ -28,6 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @Import(HelloController.class)
@@ -137,7 +138,14 @@ public class AppController {
         model.addAttribute("listUsers", listUsers);
         return "contacts";
     }
-
+    @RequestMapping("/contactsList")
+    @ResponseBody
+    public List<String> listUsers() {
+        List<User> users = userRepo.findAll();
+        return users.stream()
+                .map(User::getUsername) // Extract the username from each User object
+                .collect(Collectors.toList());
+    }
     @GetMapping("/profile")
     public String profile(Model model) {
         User user = userRepo.findByUsername(getAuth().getName());

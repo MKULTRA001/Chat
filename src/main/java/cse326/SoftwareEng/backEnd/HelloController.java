@@ -22,11 +22,12 @@ import java.util.*;
  * <p>Sends to /chat/hello</p>
  */
 @Controller
-public class HelloController{
+public class HelloController {
     private final UserRepositoryMessageDB userRepositoryMessageDB;
     private final MessageRepository messageRepository;
     private final ChannelRepository channelRepository;
     private final UserChannelRepository userChannelRepository;
+
     public HelloController(UserRepositoryMessageDB userRepositoryMessageDB,
                            MessageRepository messageRepository,
                            ChannelRepository channelRepository,
@@ -52,12 +53,13 @@ public class HelloController{
      * <p>In: /app/chat</p>
      * <p>Out: /chat/hello</p>
      * Please note that these are separate endpoints
+     *
      * @param message incoming message
      * @return response to payload
      */
     @MessageMapping("/chat/{channelId}")
     @SendTo("/chat/message/{channelId}")
-    public TextMessage helloWorld(@DestinationVariable String channelId, TextMessage message){
+    public TextMessage helloWorld(@DestinationVariable String channelId, TextMessage message) {
         String username = message.getMessage().split(":")[0];
         UserMessageDB user = userRepositoryMessageDB.findByUsername(username);
         UserChannel userChannel = userChannelRepository.findByUserIdAndChannelId(user.getId(), channelId);
@@ -69,7 +71,7 @@ public class HelloController{
         messageRepository.save(dbMessage);
         String messageId = dbMessage.getMessage_id();
         String channel = message.getChannel();
-        TextMessage message1 = new TextMessage(message.getMessage(),username, date.toString(), messageId, channel);
+        TextMessage message1 = new TextMessage(message.getMessage(), username, date.toString(), messageId, channel);
         System.out.println(message1);
         return message1;
     }
@@ -78,6 +80,7 @@ public class HelloController{
      * Respond to login attempts
      * <p>In: /app/name</p>
      * <p>Out: /chat/hello</p>
+     *
      * @param message incoming message (in this it should be a name)
      * @return response to payload
      */
@@ -94,25 +97,40 @@ public class HelloController{
         if (userChannel == null) {
             System.out.println("User " + username + " is not in channel " + channelId);
             return null;
+        } else {
+            StringBuilder response = new StringBuilder("Welcome back, " + username + "! This channel's old messages are:\n");
+            List<Message> oldMessages = messageRepository.findAllMessagesByChannelIdSortedByTimeDesc(channelId);
+            if (userChannel.getEncryptedSymmetricKey() != null) {
+                // Fetch old messages using the new method in MessageRepository
+                for (Message oldMessage : oldMessages) {
+                    System.out.println("Old message: " + oldMessage);
+                    String[] messageContentParts = oldMessage.getMessage().split(":", 2);
+                    String messageContent = messageContentParts.length > 1 ? messageContentParts[1].trim() : "";
+                    response.append(oldMessage.getUser().getUsername())
+                            .append(": ")
+                            .append(messageContent)
+                            .append(":")
+                            .append(oldMessage.getIv())
+                            .append(":")
+                            .append("ENC")
+                            .append("\n");
+                }
+                System.out.println(response.toString());
+                return new TextMessage(username + ":" + response.toString());
+            }
+            else{
+                for (Message oldMessage : oldMessages) {
+                    String[] messageContentParts = oldMessage.getMessage().split(":", 2);
+                    String messageContent = messageContentParts.length > 1 ? messageContentParts[1].trim() : "";
+                    response.append(oldMessage.getUser().getUsername())
+                            .append(": ")
+                            .append(messageContent)
+                            .append("\n");
+                }
+            }
+            System.out.println(response.toString());
+            return new TextMessage(username + ":" + response.toString());
         }
-        StringBuilder response = new StringBuilder("Welcome back, " + username + "! This channel's old messages are:\n");
-        // Fetch old messages using the new method in MessageRepository
-        List<Message> oldMessages = messageRepository.findAllMessagesByChannelIdSortedByTimeDesc(channelId);
-        for (Message oldMessage : oldMessages) {
-            System.out.println("Old message: " + oldMessage);
-            String[] messageContentParts = oldMessage.getMessage().split(":", 2);
-            String messageContent = messageContentParts.length > 1 ? messageContentParts[1].trim() : "";
-            response.append(oldMessage.getUser().getUsername())
-                    .append(": ")
-                    .append(messageContent)
-                    .append(":")
-                    .append(oldMessage.getIv())
-                    .append(":")
-                    .append("ENC")
-                    .append("\n");
-        }
-        System.out.println(response.toString());
-        return new TextMessage(username + ":" + response.toString());
     }
 
     @RequestMapping("/chat")
@@ -224,7 +242,7 @@ public class HelloController{
         if (encryptedSymmetricKey != null) {
             return new ResponseEntity<>(encryptedSymmetricKey, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
 

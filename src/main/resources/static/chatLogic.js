@@ -32,13 +32,6 @@ function appendMessage2(packet, color) {
     $("#text").append(`<tr style = 'color: ${color}' data-id = ${packet.messageId} data-uid = ${packet.uname} ${ts}><td>${sanitized}</td></tr>`);
 }
 //
-function isEncryptedMessage(message) {
-    try {
-        return btoa(atob(message)) === message;
-    } catch (error) {
-        return false;
-    }
-}
 // This function is used to display old messages in the chat window.
 async function displayOldMessages(message, uname, currentChannelId) {
     // The response message is parsed as JSON
@@ -46,8 +39,9 @@ async function displayOldMessages(message, uname, currentChannelId) {
     // The old messages are then extracted and split based on newlines
     const oldMessages = response.message.split('\n');
     console.log("old messages: " + oldMessages);
-    const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+
     const publicKey = await getRecipientsPublicKey(await getChannelCreator(currentChannelId));
+    const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
     // If the first message in the old messages array starts with the current user's name followed by a colon,
     // then the chat window is cleared before displaying the old messages.
     if (oldMessages[0].startsWith(uname + ":")) {
@@ -176,14 +170,7 @@ function send(message) {
                     await sendDirectMessage(currentChannelId, value);
                     document.getElementById("input").value = "";
                 } else {
-                    // If no target user is specified, the message is sent to the current channel.
-                    // The destination is set to the current channel.
-                    const destination = `/app/chat/${currentChannelId}`;
-                    // A message is sent to the channel with the sender's name and the message text.
-                    stompClient.send(destination, {}, JSON.stringify({
-                        'message': `${uname}: ${value}`,
-                        'channel': currentChannelId
-                    }));
+                    await sendChannelMessage(currentChannelId, value);
                     document.getElementById("input").value = "";
                 }
             }
@@ -206,8 +193,10 @@ async function getEncryptedKey(username, channelId) {
         });
 
         if (response.ok) {
-            const encryptedSymmetricKey = await response.text();
-            return encryptedSymmetricKey;
+            return await response.text();
+        } else if (response.status === 204) {
+            console.log('No encrypted symmetric key found for this channel');
+            return null;
         } else {
             console.error(`Error getting encrypted symmetric key: ${response.status}`);
             return null;
@@ -271,6 +260,42 @@ async function sendDirectMessage(currentChannelId, message) {
         console.error("Error: The channel must have exactly 2 users.");
     }
 }
+async function sendChannelMessage(currentChannelId, message) {
+    const uname = await getUname();
+    const destination = `/app/chat/${currentChannelId}`;
+
+    // Check if the channel has a symmetric key for end-to-end encryption
+    const encryptedKey = await getEncryptedKey(uname, currentChannelId);
+
+    if (encryptedKey) {
+        const publicKey = await getRecipientsPublicKey(await getChannelCreator(currentChannelId));
+        const privateKey = await loadCurve25519KeyFromLocalStorage("privateKey");
+        const symKey = await KeyDecryption(encryptedKey, publicKey, privateKey);
+
+        // If the channel has a symmetric key, use it for encryption
+        importSymmetricKey(symKey).then(async (importedKey) => {
+            console.log('Imported symmetric key:', importedKey);
+
+            // Encrypt the message
+            console.log("Message: " + message);
+            const encryptedMessage = await directMessageEncryption(message, importedKey);
+            console.log("Encrypted message:", encryptedMessage);
+
+            stompClient.send(destination, {}, JSON.stringify({
+                'message': `${uname}: ${encryptedMessage.encryptedData}`,
+                'channel': currentChannelId,
+                'iv': encryptedMessage.iv,
+            }));
+        });
+    } else {
+        // If the channel doesn't have a symmetric key, send the message without encryption
+        stompClient.send(destination, {}, JSON.stringify({
+            'message': `${uname}: ${message}`,
+            'channel': currentChannelId
+        }));
+    }
+}
+
 
 // A function that sends the current user's username to the server
 function name() {
@@ -383,41 +408,52 @@ async function getChannels() {
 }
 
 // Add this function to handle subscribing to a channel
+let subscriptions = [];
 async function subscribeToChannel(channelId) {
     let Subscription1;
     let Subscription2;
     let Subscription3;
-    if (stompClient && channelId) {
-        const uname = await getUname();
-        if (currentChannelId) {
-            if (Subscription1) {
-                await Subscription1.unsubscribe();
-                Subscription1 = null;
-            }
-            if (Subscription2) {
-                await Subscription2.unsubscribe();
-                Subscription2 = null;
-            }
-            if (Subscription3) {
-                await Subscription3.unsubscribe();
-                Subscription3 = null;
-            }
-            clearChatWindow();
+    await subscriptions.forEach((subscription) => {
+        if (subscription) {
+            subscription.unsubscribe();
         }
-        const response = await fetch(`/checkPrivateChannel/${channelId}`);
+    });
+    subscriptions = [];
+    const response = await fetch(`/checkPrivateChannel/${channelId}`);
         console.log(response);
         if (response.ok) {
             const isPrivate = await response.json();
             console.log(isPrivate);
+            if (stompClient && channelId) {
+                const uname = await getUname();
+                if (currentChannelId) {
+                    if (Subscription1) {
+                        await Subscription1.unsubscribe();
+                        Subscription1 = null;
+                    }
+                    if (Subscription2) {
+                        await Subscription2.unsubscribe();
+                        Subscription2 = null;
+                    }
+                    if (Subscription3) {
+                        await Subscription3.unsubscribe();
+                        Subscription3 = null;
+                    }
+                    clearChatWindow();
+                }
             if (isPrivate) {
                 console.log("channel id: " + channelId);
                 const privateChannelName = $("#userChannels button[data-channel-id='" + channelId + "']").text();
                 $("#channel-name").text(privateChannelName);
                 const [_, user1, user2] = privateChannelName.match(/DM:(\w+) and (\w+)/);
+                if (Subscription1) {
+                    await Subscription1.unsubscribe();
+                }
                 Subscription1 = await stompClient.subscribe(`/chat/login/${channelId}`, async function (message) {
                     await displayOldMessages(message, uname, currentChannelId);
                     await Subscription1.unsubscribe();
                 });
+                subscriptions.push(Subscription1);
                 // Subscribe to messages from user1 to user2
                 Subscription2 = await stompClient.subscribe(`/chat/message/private/${user1}/${user2}`, async function (message) {
                     console.log("2user1: " + user1);
@@ -433,6 +469,7 @@ async function subscribeToChannel(channelId) {
                         }
                     }
                 });
+                subscriptions.push(Subscription2);
                 Subscription3 = await stompClient.subscribe(`/chat/message/private/${user2}/${user1}`, async function (message) {
                     console.log("2user1: " + user1);
                     console.log("user2: " + user2);
@@ -446,12 +483,18 @@ async function subscribeToChannel(channelId) {
                             appendMessage2(msg, 'red');
                         }
                     }
+                    subscriptions.push(Subscription3);
                 });
                 stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({'message': uname}));
             }else {
-                Subscription1= await stompClient.subscribe(`/chat/login/${channelId}`, function (message) {
-                    displayOldMessages(message, uname, currentChannelId);
+                if (Subscription1) {
+                    await Subscription1.unsubscribe();
+                }
+                Subscription1= await stompClient.subscribe(`/chat/login/${channelId}`, async function (message) {
+                    await displayOldMessages(message, uname, currentChannelId);
+                    await Subscription1.unsubscribe();
                 });
+                subscriptions.push(Subscription1);
                 Subscription2 = await stompClient.subscribe(`/chat/message/${channelId}`, function (message) {
                     const msg = JSON.parse(message.body);
                     if (msg.uname === uname) {
@@ -460,7 +503,10 @@ async function subscribeToChannel(channelId) {
                         appendMessage2(msg, 'red');
                     }
                 });
+                subscriptions.push(Subscription2);
+
                 Subscription3 = stompClient.send(`/app/name/${channelId}`, {}, JSON.stringify({'message': uname}));
+                subscriptions.push(Subscription3);
                 const channelName = $("#userChannels button[data-channel-id='" + channelId + "']").text();
                 $("#channel-name").text(channelName);
             }
@@ -545,7 +591,7 @@ async function fetchChannels() {
     const userChannels = await getChannels();
     console.log("userChannels:", userChannels);
     // The list of channels is rendered in the userChannels element.
-    renderChannels(userChannels);
+    await renderChannels(userChannels);
     // If there are any channels in the list, the user is subscribed to the first channel after a short delay.
     if (userChannels.length > 0) {
         const channelId = userChannels[0].channel_id;
@@ -738,8 +784,7 @@ async function decryptMessage(key, iv, encryptedData) {
     );
 
     const decoder = new TextDecoder();
-    const message = decoder.decode(decryptedData);
-    return message;
+    return decoder.decode(decryptedData);
 }
 
 function loadTweetNaCl(callback) {
@@ -752,51 +797,75 @@ function loadTweetNaCl(callback) {
     };
     document.head.appendChild(script);
 }
+function promptUser(users, channelType) {
+    return new Promise(resolve => {
+        const select = document.createElement("select");
+        users.forEach(username => { // Loop through the usernames
+            const option = document.createElement("option");
+            option.text = username; // Use the username string as the option text
+            option.value = username;
+            select.add(option);
+        });
+        select.multiple = channelType !== 'DM';
+        const submit = document.createElement("button");
+        submit.textContent = "Invite";
+        submit.addEventListener("click", () => {
+            resolve(Array.from(select.selectedOptions).map(option => option.value));
+            container.remove(); // Remove the dropdown menu from the DOM
+        });
+        const container = document.createElement("div");
+        container.className = "user-selection-container"; // Add the class to the container
+        container.appendChild(select);
+        container.appendChild(submit);
+        document.body.appendChild(container);
+    });
+}
 
 // A function that runs when the page is loaded
 $(async function () {
     loadTweetNaCl();
-    const keyA = await loadKeyFromLocalStorage("keyA", 'AES');
-    const keyB = await loadKeyFromLocalStorage("keyB", 'AES');
-    const privateKey = loadCurve25519KeyFromLocalStorage("privateKey");
-    const publicKey = loadCurve25519KeyFromLocalStorage("publicKey");
 
     // Prevent the form from submitting when the "Enter" key is pressed
     $("form").on('submit', function (e) {
         e.preventDefault();
     });
-    // Call the getUname function to get the current user's username, and then replace the "Username:" text in the HTML with the current username
-    getUname().then(uname => $("#username_Update").replaceWith("Username: " + uname));
-    // Call the name function to set up the "Send" button
-    name();
-    fetchChannels().then(() => {
-    });
+
     // Set up event listeners for the "Connect", "Disconnect", and "Send" buttons
-    $("#connect").click(connect);
+    await connect();
     $("#disconnect").click(disconnect);
     $("#send").click(send);
+
+    // Call the getUname function to get the current user's username, and then replace the "Username:" text in the HTML with the current username
+    getUname().then(uname => $("#username_Update").replaceWith("Username: " + uname));
+    await fetchChannels();
+    await name();
+    // Call the name function to set up the "Send" button
 
 // Add channel button click event
     $("#addChannel").on("click", async function () {
         const channelName = prompt("Enter channel name:");
+        const users = await fetch("/contactsList").then(res => res.json());
+        console.log(channelName)
+        console.log(users);
         if (channelName) {
-            const users = prompt("Enter usernames separated by commas:");
-            if (users) {
-                const userList = users.split(',').map(u => u.trim());
-                const response = await createChannel(channelName, userList);
+            const selectedUsers = await promptUser(users, 'channel');
+            if (selectedUsers) {
+                const response = await createChannel(channelName, [selectedUsers]);
                 console.log(response);
-                await fetchChannels(); // Fetch and update the channel list after creating a new channel
+                await fetchChannels();
             }
         }
     });
 
     // Add Create dm button click event
     $("#CreateDM").on("click", async function () {
-        const username = prompt("Enter username:");
+        const users = await fetch("/contactsList").then(res => res.json());
+        console.log(users);
+        const username = await promptUser(users, 'DM');
         if (username) {
             const response = await createPrivateChannel(username);
             console.log(response);
-            await fetchChannels(); // Fetch and update the channel list after creating a new channel
+            await fetchChannels();
         }
     });
 
@@ -811,6 +880,4 @@ $(async function () {
     });
 
 });
-document.addEventListener('DOMContentLoaded', async () => {
-    await fetchChannels();
-});
+

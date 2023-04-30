@@ -15,6 +15,30 @@
     <script src="../static/themeLogic.js"></script>
     <script src="../static/chatLogic.js"></script>
     <!-- [Credit] Some basic UI concepts are base from Discord and themeforest-->
+
+
+    <style>
+        .user-selection-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            z-index: 1000;
+        }
+        .user-selection-container select {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .user-selection-container button {
+            display: block;
+            width: 100%;
+        }
+    </style>
+    <!-- This makes a popup for the user to select who they want to invite-->
 </head>
 <body>
 <div style="flex-direction: row; height: 100%; display: flex;">
@@ -82,5 +106,6 @@
                 <button id="send" class="btn message-btn" type="submit" disabled="disabled">Send</button>
             </div>
         </form>
+
     </main>
 </div>
