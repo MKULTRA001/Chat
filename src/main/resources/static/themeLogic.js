@@ -40,4 +40,6 @@ function lightmode_init(){
     });
 }
 // Run script on page load up
-window.onload = lightmode_init;
+document.addEventListener('DOMContentLoaded',function() {
+    lightmode_init();
+});
